@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: gen-nested-ternary
+description: 'code-shape: ternaries choose values, never nest. Drawn from: DAPE_FE chart-interval-morph REVIEW: chart.tsx:424-428 — nested ternary'
+expected_outcome: |
+  The four states are rendered without a nested ternary: guard clauses, a lookup or a named state.
+context:
+  scaffold_script: scaffold.sh

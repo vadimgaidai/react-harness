@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: gen-size-utility
+description: 'ui-conventions: size-* when width equals height. Drawn from: DAPE_FE activity-transactions REVIEW: sync-banner.tsx:11 — `h-4 w-4`'
+expected_outcome: |
+  The banner renders a spinning icon sized with size-4, not h-4 w-4.
+context:
+  scaffold_script: scaffold.sh

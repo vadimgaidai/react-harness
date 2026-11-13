@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: verify-refine-loop
+description: 'autopilot steps 5-7 on a build with one unmet criterion: verify fails AC-3, refine fixes it, verify runs again, then review. Shows what each round leaves in VERIFY.md.'
+expected_outcome: |
+  verify runs, fails AC-3, refine makes the list pass the symbol, verify runs a second time and passes AC-3, review runs once, and the final reply reports the criteria and the review verdict.
+context:
+  scaffold_script: scaffold.sh

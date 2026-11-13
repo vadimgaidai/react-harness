@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: gen-prop-to-state-effect
+description: 'react: derived state is computed in render; render stays pure. Drawn from: DAPE_FE chart-interval-morph REVIEW: blur-swap-text.tsx:24-26 — a prop synced into state by an effect; chart.tsx:415-418 — a ref written during render'
+expected_outcome: |
+  The previous value is tracked with state adjusted during render: no effect that copies the prop, no ref written while rendering.
+context:
+  scaffold_script: scaffold.sh

@@ -16,7 +16,7 @@ app → pages → widgets → features → entities → shared
 - Import **downward only**. Never upward, never sideways within a layer — a feature must not import another feature, an entity must not import another entity.
 - Cross-layer imports go through `@/`; relative imports only within one module. External code enters a module only through its `index.ts` barrel. The one exception is UI primitives (`@/shared/ui/[name]`), imported by direct path so the bundle doesn't pull the whole barrel.
 
-The import direction and the naming rules below are enforced by this plugin's PreToolUse hooks — a violating write is blocked, so don't spend effort re-checking them by hand.
+The import direction and the naming rules below are enforced by this plugin's PreToolUse hook — a violating write is blocked, so don't spend effort re-checking them by hand. A file sitting directly in `src/` (`main.tsx`, `vite-env.d.ts`) belongs to no layer and is left alone.
 
 ## Which layer?
 
@@ -52,6 +52,16 @@ Every module has the same skeleton — see [references/fsd-module-anatomy.md](re
 
 Files and folders are `kebab-case`. Suffixes: `.api.ts`, `.queries.ts`, `.mutations.ts`. Pages are `[name]-page.tsx`.
 
+## Where rendered output lives
+
+Rendered output lives in a slice's `ui/` and, for page files, in `pages/`
+(`pages/[name]/[name]-page.tsx`) — the two the anatomy above produces. The content rules
+are enforced there, and under `components/` and `layouts/` as well, for a project that
+still carries those folder names from before the migration: a `.tsx` under any of the four
+may not define a domain type, an as-const constant, a zod schema, a hook or an HTTP call.
+A `.tsx` elsewhere in a slice — in its root, or under `model/` — is outside the anatomy,
+so the content rules cannot see it and `review` takes it as a placement question.
+
 ## Scaffolding a module
 
 Deterministic, not model-generated:
@@ -61,28 +71,6 @@ bash "${CLAUDE_PLUGIN_ROOT}"/skills/structure/scripts/scaffold.sh <layer>/<name>
 ```
 
 Omit the file list for the layer's default skeleton. The script validates kebab-case and refuses to touch an existing module — if it refuses, the module exists: extend it instead.
-
-## Reviewing
-
-**Hook-enforced — never re-report:** top-level layer of a new file; filename
-case; barrel import from `shared/ui`; a domain type, an as-const constant, a
-zod schema, a hook, or an HTTP call defined in a UI file; an upward or
-sideways import; an entity calling `useMutation`.
-
-**Script-checkable (`review` runs `structure-check.sh <changed files>`):** a
-module missing its barrel; a barrel re-exporting a file that does not exist;
-a `use-*.ts` outside `hooks/`; a `.api.ts` without a sibling
-`.queries.ts`/`.mutations.ts`.
-
-**Judgement — the rubric:**
-- local vs global: a wrapper promoted to `shared/ui/` while it still carries
-  one feature's domain knowledge ([references/ui.md](references/ui.md) row
-  test) — quote the row
-- a page holding business logic or fetching directly
-- a module whose anatomy differs from the layer's skeleton without a stated
-  reason
-- an entity importing another entity through a relative path the hook cannot
-  see
 
 ## Reading the canonical code shapes
 
@@ -109,3 +97,5 @@ Open the **one** file that matches what you are writing, never the set:
 | types, unions, `as const` sets | [references/typing.md](references/typing.md) |
 | a public barrel | [references/barrels.md](references/barrels.md) |
 | a UI component — which folder | [references/ui.md](references/ui.md) |
+
+[references/reviewing.md](references/reviewing.md): the questions `review` asks; not needed when writing code.

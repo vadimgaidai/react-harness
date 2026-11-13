@@ -1,7 +1,7 @@
 #!/bin/bash
-# Script-checkable half of structure/SKILL.md's `## Reviewing` section — the list that
+# Script-checkable half of structure/references/reviewing.md — the list that
 # needs no judgment: a module missing its barrel, a barrel re-exporting a file that does
-# not exist, a `use-*.ts` outside `hooks/`. Everything else in that section stays a
+# not exist, a `use-*.ts` outside `hooks/`. Everything else in that file stays a
 # judgment call for `review`'s `structure` angle.
 #
 # Usage: structure-check.sh <changed-file ...>

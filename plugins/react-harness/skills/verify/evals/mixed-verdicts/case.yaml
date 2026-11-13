@@ -1,0 +1,9 @@
+schema_version: "1.1"
+name: mixed-verdicts
+expected_outcome: |
+  .planning/comments/VERIFY.md gives AC-1 a pass on the sorting test, AC-2 a pass on the
+  submit button's disabled line, AC-3 a fail (nothing handles 409), AC-4 unverifiable with
+  manual steps. It names `authorName` as a field the contract does not have, lists the
+  missing empty state as a spec gap and not a failure, and no source file is changed.
+context:
+  scaffold_script: scaffold.sh

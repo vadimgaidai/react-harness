@@ -3,30 +3,24 @@
 ## Dev loop
 
 ```bash
-claude --plugin-dir ./plugins/react-feature-workflow
+claude --plugin-dir ./plugins/react-harness
 /reload-plugins        # after editing a skill or hook
 ```
 
 ## Checks
 
 ```bash
-./scripts/check-all.sh
+claude plugin validate --strict .
+for p in plugins/*/; do claude plugin validate --strict "$p"; done
 ```
 
-Manifests match the marketplace, every skill and agent has frontmatter, hook scripts exist and are executable, markdown links resolve, every `references/` file is mentioned by its skill, every `.sh` and `.mjs` parses, every eval fixture scaffolds. CI runs the same script.
+CI runs the same two commands. What is and is not measured: [docs/DESIGN.md](./docs/DESIGN.md#how-the-harness-is-measured).
 
-Behaviour is checked by evals:
-
-```bash
-claude plugin eval plugins/react-feature-workflow --scaffold --allow-tools Bash Write Edit \
-  --ablation none --case review-deslop
-```
-
-One `--case` per run. Cases and graders are described in [plugins/react-feature-workflow/evals/README.md](./plugins/react-feature-workflow/evals/README.md).
+What a skill, an agent, a hook and a stage have to look like: [docs/RUBRIC.md](./docs/RUBRIC.md). Skills are written and measured with Claude Code's own tools, listed there.
 
 ## Releasing
 
-Bump the version or nothing ships. `claude plugin update` compares `version` with the installed copy and skips the update when they match. The version lives in `plugins/<name>/.claude-plugin/plugin.json` and in `.claude-plugin/marketplace.json`; `check-all.sh` fails when they differ.
+Bump the version or nothing ships. `claude plugin update` compares `version` with the installed copy and skips the update when they match. The version lives in `plugins/<name>/.claude-plugin/plugin.json` and in `.claude-plugin/marketplace.json` and has to match.
 
 ## Layout
 
@@ -38,7 +32,5 @@ plugins/<name>/
   skills/<skill>/references/      worked shapes; each file is linked from its SKILL.md
   agents/*.md                     frontmatter: name and description
   hooks/hooks.json                commands point into hooks/scripts/
-  evals/<case>/                   case.yaml, scaffold.sh, graders/
-docs/                             getting started, use cases, design
-scripts/                          check-all.sh, validate.mjs, test-scripts.sh
+docs/                             getting started, use cases, design, rubric
 ```

@@ -1,7 +1,7 @@
 # Components — where they live, not how they're built
 
 > The *how* (extending a primitive, styling, icons) is a UI conventions skill
-> if one is loaded (e.g. `react-feature-workflow`'s `ui-conventions`) — this
+> if one is loaded (e.g. `react-harness`'s `ui-conventions`) — this
 > file only decides the folder. Placeholders: `[name]` kebab-case, `[Name]`
 > PascalCase.
 

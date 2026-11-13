@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: impl-sibling-logic
+description: 'implement + sibling-outline: the outline is a map; the sibling file with the same role is read whole, so patterns that live only in function bodies are mirrored. The sibling mutations.ts is over 60 lines, so the outline shows its export lines only.'
+expected_outcome: |
+  src/api/activity/mutations.ts invalidates through invalidateOnSettle and passes meta.successKey, as src/api/wallets/mutations.ts does, and the outline script ran. successKey appears nowhere but in that file's bodies, which the outline does not print, so passing 02 means the file was read whole (by Read or by cat).
+context:
+  scaffold_script: scaffold.sh

@@ -18,5 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      # Same entry point as running ./scripts/check-all.sh locally, so the two cannot drift.
-      - run: ./scripts/check-all.sh
+      # Claude Code's own validator, the same two commands CONTRIBUTING.md gives for a local run.
+      - run: npm install -g @anthropic-ai/claude-code
+      - run: claude plugin validate --strict .
+      - run: for p in plugins/*/; do claude plugin validate --strict "$p" || exit 1; done

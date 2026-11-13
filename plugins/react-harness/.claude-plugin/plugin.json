@@ -1,0 +1,29 @@
+{
+  "name": "react-harness",
+  "displayName": "React Harness",
+  "description": "The core of React Harness for Claude Code: a hook that routes every session to nine convention skills (React 19, TanStack Query, shadcn/ui, forms, routing, TypeScript, error handling, code shape, testing), so a plain request comes out in one structure and style. Optional stages started by you: spec, plan, implement, verify, review, refine, and autopilot for a hook-driven verify → refine → review loop. Pair with feature-folders or feature-sliced-design; add a design plugin for the look.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Vadym Haidai",
+    "url": "https://github.com/vadimgaidai"
+  },
+  "homepage": "https://github.com/vadimgaidai/react-harness/tree/main/plugins/react-harness",
+  "repository": "https://github.com/vadimgaidai/react-harness",
+  "license": "MIT",
+  "icon": "./icon.svg",
+  "documentationUrl": "https://github.com/vadimgaidai/react-harness/tree/main/plugins/react-harness",
+  "supportUrl": "https://github.com/vadimgaidai/react-harness/issues",
+  "keywords": [
+    "react",
+    "harness",
+    "architecture",
+    "code-style",
+    "conventions",
+    "spec-driven-development",
+    "code-review",
+    "typescript",
+    "tanstack-query",
+    "shadcn-ui",
+    "figma"
+  ]
+}

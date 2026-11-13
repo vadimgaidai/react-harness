@@ -12,32 +12,35 @@
      yes → pages/<name>/
      no  → next question
 
-3. Is it needed by two or more pages, OR does it carry its own state/data
-   independent of any one page (a context, a mutation, a piece of cache)?
-     yes → features/<name>/
-     no  → it is not a module yet — it stays inside the page's own
-           components/ or hooks/, see references/placement.md
+3. Is it a domain area of its own — data and actions the user knows by a name
+   (comments, attachments, billing, notifications), usually backed by its own
+   src/api/<resource>/?
+     yes → features/<name>/, from the first iteration, even while one page
+           is its only caller
+     no  → it is a piece of one page's own layout (a header row, a section
+           shell, a hero block) and stays in that page's components/;
+           a piece with no domain at all is global, see references/placement.md
 ```
 
-A request that seems to need a new top-level module usually answers "yes" to
-exactly one of these. If it answers "yes" to none, it isn't a module — it's a
-component or hook local to the page that asked for it, which is the common
-case and needs no promotion at all.
+A page only composes: it reads its route params and places layouts and features. A domain
+area does not wait for a second page to become a module, because work is built in parts and
+the second caller usually arrives in a later iteration; moving a grown folder out of a page
+then is a refactor nobody schedules.
 
 ## Worked examples
 
 - A dashboard shell with a sidebar, mounted once in the router and wrapping
   every `/app/*` route: **layout** — `layouts/dashboard/dashboard-layout.tsx`.
-- `/settings`, reachable from the router and from nowhere else as code: **page**
-  — `pages/settings/settings-page.tsx`.
-- A guided product tour: state persists across routes (a completed flag in
-  storage), it is restarted from the settings page but runs on the home page,
-  and it mounts a provider in the layout. Two different pages touch it and it
-  owns its own state: **feature** — `features/guided-tour/`.
-- A five-step onboarding checklist that only ever appears on the home page,
-  reads no route param, and is restarted from nowhere else: not promoted —
-  `pages/home/components/onboarding-checklist.tsx`, until a second page needs
-  it or it grows its own persisted state.
+- `/issues/:id`, reachable from the router: **page** — `pages/issue/issue-page.tsx`, which
+  places the issue body, the comment thread and the attachments and activity tabs.
+- The comment thread on that page: **feature** — `features/comments/`, with its composer,
+  replies and pagination, even though the issue page is its only caller today. Attachments
+  with their upload action are `features/attachments/`, the activity log `features/activity/`.
+- The page's title row with the issue number and status: not a domain area of its own, it
+  heads this page — `pages/issue/components/issue-header.tsx`.
+- A bar chart that takes points, a config and formatters and knows nothing about issues: no
+  domain at all — `src/components/bar-chart.tsx` from the start; the activity chart that
+  feeds it lives in the feature that owns the data.
 
 ## Module anatomy — the same skeleton for all three
 

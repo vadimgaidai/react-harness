@@ -1,18 +1,18 @@
 {
   "name": "feature-sliced-design",
   "displayName": "Feature-Sliced Design",
-  "description": "Feature-Sliced Design guardrails: a skill that answers layer and import questions, a module scaffolder, and hooks that reject a misplaced file, a wrong filename, an upward/sideways import, or model content in the wrong place before it is written — not in review after.",
-  "version": "0.3.1",
+  "description": "The structure plugin of React Harness for Feature-Sliced Design: a skill that answers layer and import questions, a module scaffolder, and hooks that reject a misplaced file, a wrong filename, an upward or sideways import, or model content in the wrong place before it is written, not in review after.",
+  "version": "0.3.3",
   "author": {
     "name": "Vadym Haidai",
     "url": "https://github.com/vadimgaidai"
   },
-  "homepage": "https://github.com/vadimgaidai/react-feature-kit/tree/main/plugins/feature-sliced-design",
-  "repository": "https://github.com/vadimgaidai/react-feature-kit",
+  "homepage": "https://github.com/vadimgaidai/react-harness/tree/main/plugins/feature-sliced-design",
+  "repository": "https://github.com/vadimgaidai/react-harness",
   "license": "MIT",
   "icon": "./icon.svg",
-  "documentationUrl": "https://github.com/vadimgaidai/react-feature-kit/tree/main/plugins/feature-sliced-design",
-  "supportUrl": "https://github.com/vadimgaidai/react-feature-kit/issues",
+  "documentationUrl": "https://github.com/vadimgaidai/react-harness/tree/main/plugins/feature-sliced-design",
+  "supportUrl": "https://github.com/vadimgaidai/react-harness/issues",
   "keywords": [
     "feature-sliced-design",
     "fsd",

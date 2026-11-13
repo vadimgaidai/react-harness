@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: gen-endpoint-return-type
+description: 'api-contract / typescript: types come from the contract. Drawn from: DAPE_FE activity-transactions REVIEW: api.ts:26 — updateActivity typed Promise<IActivitiesListResponse>, the endpoint returns one transaction'
+expected_outcome: |
+  updateActivity returns the single transaction the endpoint answers with, not the list response its neighbour returns.
+context:
+  scaffold_script: scaffold.sh

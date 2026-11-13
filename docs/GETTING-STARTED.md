@@ -3,13 +3,13 @@
 ## Install
 
 ```bash
-claude plugin marketplace add vadimgaidai/react-feature-kit
-claude plugin install react-feature-workflow@vadimgaidai --scope project
-claude plugin install feature-sliced-design@vadimgaidai --scope project   # Feature-Sliced Design architecture
-claude plugin install feature-folders@vadimgaidai --scope project         # modular architecture (feature folders)
+claude plugin marketplace add vadimgaidai/react-harness
+claude plugin install react-harness@vadimgaidai --scope project
+claude plugin install feature-folders@vadimgaidai --scope project         # feature, page and layout modules plus global buckets
+claude plugin install feature-sliced-design@vadimgaidai --scope project   # Feature-Sliced Design layers
 ```
 
-Inside a session, `/plugin` opens a picker. Choose "Install for all collaborators on this repository (project scope)".
+One structure plugin per project; they disagree on what `src/` should look like. Inside a session, `/plugin` opens a picker. Choose "Install for all collaborators on this repository (project scope)".
 
 ## Scope
 
@@ -20,11 +20,11 @@ The install writes this to `.claude/settings.json`:
 ```json
 {
   "extraKnownMarketplaces": {
-    "vadimgaidai": { "source": { "source": "github", "repo": "vadimgaidai/react-feature-kit" } }
+    "vadimgaidai": { "source": { "source": "github", "repo": "vadimgaidai/react-harness" } }
   },
   "enabledPlugins": {
-    "react-feature-workflow@vadimgaidai": true,
-    "feature-sliced-design@vadimgaidai": true
+    "react-harness@vadimgaidai": true,
+    "feature-folders@vadimgaidai": true
   }
 }
 ```
@@ -33,16 +33,38 @@ Commit it. Teammates then see the plugins as "not installed" and run the install
 
 ## Requirements
 
-- `jq` for the structure plugins. Without it their hooks exit silently and block nothing.
-- One structure plugin per project. They disagree on what `src/` should look like.
-- The Figma MCP server for `theme-sync` and `block-builder`.
+- `node` for the hooks of all three plugins.
+- A React project. Elsewhere the convention skills never load.
+- The Figma MCP server for `theme-sync` and `block-builder`. Without it `implement` builds all UI itself.
+
+## Design plugins
+
+The harness shapes the code, not the look. Add whatever design tooling you like next to it. We recommend Anthropic's `frontend-design` plugin for a fresh UI and the harness's Figma agents for a design that already exists; the rules keep what either writes on shadcn primitives, semantic tokens and the project's structure.
 
 ## First run
 
+Ask for a feature with no command:
+
 ```
-/react-feature-workflow:spec add comments to articles
+add a settings page with a profile form: name, email, avatar upload, saved through PATCH /me
 ```
 
-Read `.planning/comments/SPEC.md`, fix it, then `plan`, `implement`, `verify`, `review`, each in a fresh session. A request that is one block goes straight to `block-builder`; `spec` says so and stops. Prefix the request with `block:`, `layout:`, `feature:` or `change:` to set the shape yourself.
+The session-start hook has already named the convention skills to call; the structure hook checks every new file. Read what landed against the structure in the plugin's README.
 
-The convention skills and the structure hooks need no command. They apply while Claude writes.
+Then a review of a branch that already exists:
+
+```
+/react-harness:review
+```
+
+No spec, no `.planning/` folder. It reports against `CLAUDE.md`, `.claude/rules/` and the convention skills, and edits nothing.
+
+Then, when you want a spec you can read before any code exists:
+
+```
+/react-harness:spec add comments to articles
+```
+
+Read `.planning/comments/SPEC.md` and fix it, then run `plan`, `implement`, `verify`, `review`, `refine` one at a time, any model you choose per stage. This takes more time and tokens than just asking and gives you every step to check. For a change you can say in one sentence, or for an agent running without you, `/react-harness:autopilot` runs the same stages in one go.
+
+To keep the route to the skills in your repository as well, add the lines from the [plugin README](../plugins/react-harness/README.md#convention-skills) to the project's own `CLAUDE.md`.

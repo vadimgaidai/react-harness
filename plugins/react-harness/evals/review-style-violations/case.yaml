@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: review-style-violations
+description: 'review + code-shape + ui-conventions: each style violation reported with its line; a required callback shape is not one. Drawn from: DAPE_FE activity-transactions and chart-interval-morph REVIEW, Style violations sections'
+expected_outcome: |
+  The reply cites the third positional parameter, the nested ternary, the explanatory comments and h-4 w-4 by file:line, and does not report the three-parameter map callback in story-list.tsx as a finding.
+context:
+  scaffold_script: scaffold.sh

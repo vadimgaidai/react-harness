@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: gen-third-parameter
+description: 'code-shape: two parameters is the ceiling. Drawn from: DAPE_FE activity-transactions REVIEW: formatDecimal(value, maxDecimals, symbol?) and toLegRow(tx, leg, index)'
+expected_outcome: |
+  formatDecimal takes the symbol through an options object, not a third positional parameter, and the list passes it.
+context:
+  scaffold_script: scaffold.sh

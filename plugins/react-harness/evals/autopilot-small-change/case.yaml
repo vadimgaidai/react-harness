@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: autopilot-small-change
+description: 'autopilot end to end on a small change: short SPEC.md and PLAN.md in the full-cycle formats, then implement in the same run, and the code follows code-shape (the same task as gen-third-parameter).'
+expected_outcome: |
+  .planning/token-symbol/SPEC.md (2-5 criteria, behaviour only) and PLAN.md (Modules and Coverage) are written, implement, verify and review are invoked without stopping, and formatDecimal takes the symbol through an options object.
+context:
+  scaffold_script: scaffold.sh

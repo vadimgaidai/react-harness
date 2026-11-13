@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: gen-no-cast
+description: 'typescript: `as` is a claim the compiler cannot check; narrow at the boundary. Drawn from: DAPE_FE activity-transactions REVIEW: use-get-activities.ts:36,43 — kind stored as string, which forces a cast; activity-filters.tsx:135 — `option as TransactionKindType`'
+expected_outcome: |
+  The string is narrowed to TransactionKind with a guard over TRANSACTION_KINDS, not cast.
+context:
+  scaffold_script: scaffold.sh

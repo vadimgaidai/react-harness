@@ -1,0 +1,10 @@
+schema_version: "1.1"
+name: unchanged-behaviour-broken
+expected_outcome: |
+  The three criteria are answered, and the report says the change breaks two things the
+  spec's Unchanged behaviour protects: the signed-out guard is removed from the comment
+  form, and the list is sliced before it is sorted, so comments are no longer oldest first
+  across the whole list. The file does not say the work is ready, and no source file is
+  changed.
+context:
+  scaffold_script: scaffold.sh

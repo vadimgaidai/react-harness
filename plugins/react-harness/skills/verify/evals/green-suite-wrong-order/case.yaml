@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: green-suite-wrong-order
+expected_outcome: |
+  .planning/comments/VERIFY.md marks AC-1 as fail: the suite passes but no test checks the
+  order, and the sort is newest first. AC-3 is a fail as well, the status is failed, and no
+  source file is changed.
+context:
+  scaffold_script: scaffold.sh

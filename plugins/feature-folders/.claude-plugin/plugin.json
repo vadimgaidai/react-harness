@@ -1,18 +1,18 @@
 {
   "name": "feature-folders",
   "displayName": "Feature Folders",
-  "description": "Architecture-agnostic structure guardrails: global buckets (components, hooks, providers, lib, config, api) plus feature/page/layout modules, a scaffolder, and hooks that reject a new file outside them, a wrong filename, or model content (a type, a constant, a schema, a hook, an HTTP call) in the wrong place — placement and naming only ever block a new file, so a legacy project stays untouched.",
-  "version": "0.2.1",
+  "description": "The structure plugin of React Harness for projects without layers: a features/<name>/ module per domain area, an api/<resource>/ folder per backend resource, pages that only compose, plus global buckets. A skill answers local or global, a scaffolder creates a module, and a hook refuses a new file outside the structure, a wrong filename, or model content (a type, a constant, a schema, a hook, an HTTP call) in a UI file. Placement and naming block new files only, so a legacy project stays untouched.",
+  "version": "0.3.0",
   "author": {
     "name": "Vadym Haidai",
     "url": "https://github.com/vadimgaidai"
   },
-  "homepage": "https://github.com/vadimgaidai/react-feature-kit/tree/main/plugins/feature-folders",
-  "repository": "https://github.com/vadimgaidai/react-feature-kit",
+  "homepage": "https://github.com/vadimgaidai/react-harness/tree/main/plugins/feature-folders",
+  "repository": "https://github.com/vadimgaidai/react-harness",
   "license": "MIT",
   "icon": "./icon.svg",
-  "documentationUrl": "https://github.com/vadimgaidai/react-feature-kit/tree/main/plugins/feature-folders",
-  "supportUrl": "https://github.com/vadimgaidai/react-feature-kit/issues",
+  "documentationUrl": "https://github.com/vadimgaidai/react-harness/tree/main/plugins/feature-folders",
+  "supportUrl": "https://github.com/vadimgaidai/react-harness/issues",
   "keywords": [
     "architecture",
     "react",
