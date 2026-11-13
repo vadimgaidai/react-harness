@@ -23,6 +23,7 @@ description: shadcn/ui + Tailwind conventions for any React component or .tsx th
 - Icons come from the `iconLibrary` in `components.json` (`lucide-react` here); inside a `Button` they take `data-icon="inline-start"`/`"inline-end"` and no size; a standalone icon takes `size-*` and, when it carries meaning, a label; a prop takes the icon component (`icon={CheckIcon}`), not a string key.
 - Every visible string, including toasts, schema messages, fallbacks and formatted numbers, dates and plurals, goes through `t("key")` and the project's i18n formatting.
 - Loading, empty and error each render something of their own (under a suspense read the `QueryBoundary`'s skeleton and error fallbacks, and the component's own empty branch); split JSX past ~80 lines or a chunk with its own state; one file fetches, maps or renders.
+- A screen built or changed is looked at before it is called done, in the browser the session has (Claude in Chrome, else a headless driver outside the project, never a browser package added to it): desktop width and 375 px, plus the states you can switch to (a tab, a filter, an empty or failed request); fix what looks wrong, since a typecheck cannot see a flat chart or a legend past its card.
 - Where a file lives is the structure skill loaded in this project; with none loaded, no `index` barrel and no folder per component: one file per component next to its caller.
 
 ## Example

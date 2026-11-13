@@ -81,7 +81,7 @@ Of a skill's `references/`, open only the file that matches what you are about t
 
 ## Verify
 
-Run the project's typecheck. That is the whole verification. Do not run a full build or lint unless the project has no other check — pre-commit hooks and CI own those. Do not start the dev server, open a browser, or invoke the `run` skill: what the feature does in a browser is `/react-feature-workflow:verify`'s `manual` tier — it gives the user the steps — and anything a static read cannot establish is reported as such rather than claimed. When the typecheck passes, write the report and stop. A typecheck that cannot run (dependencies not installed, registry unreachable) is not a failure: do not install packages or fall back to a global `tsc`; say why in the report and stop.
+Run the project's typecheck. Do not run a full build or lint unless the project has no other check — pre-commit hooks and CI own those. Then look at each screen you built once, as `ui-conventions` says, and fix what looks wrong; a full walk of every flow is `/react-feature-workflow:verify`'s `manual` tier, and anything you could not see is reported as such rather than claimed. When the typecheck passes, write the report and stop. A typecheck that cannot run (dependencies not installed, registry unreachable) is not a failure: do not install packages or fall back to a global `tsc`; say why in the report and stop.
 
 ## Output
 
