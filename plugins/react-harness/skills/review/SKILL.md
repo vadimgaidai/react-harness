@@ -1,7 +1,7 @@
 ---
 name: review
 description: Checks a change against the project's and this harness's code rules, for unnecessary complexity and for inefficient data handling — reading only the context each question needs, and proving every finding before reporting it. Writes the report to `.planning/[name]/REVIEW.md` when the work has a planning folder. Reports only; fixes are a separate request through `refine`. Takes an optional angle argument (`skills`, `structure`, `sibling`, `slop`) and a git range or paths. Use before opening a PR, or when the user asks to review changes.
-allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/reviewing-sections.mjs)
+allowed-tools: Bash(node ${CLAUDE_SKILL_DIR}/scripts/reviewing-sections.mjs)
 argument-hint: "[angles] [range or paths] [.planning/<name>]"
 context: fork
 ---
@@ -223,7 +223,7 @@ Each convention skill's `references/reviewing.md`, read from the skill when this
 started. These are the sentences the `skills` angle quotes; a file reported as not found
 means that skill states no review questions, and no `skills` finding cites it.
 
-!`${CLAUDE_SKILL_DIR}/scripts/reviewing-sections.mjs`
+!`node ${CLAUDE_SKILL_DIR}/scripts/reviewing-sections.mjs`
 
 ## Last step
 
