@@ -1,7 +1,7 @@
 ---
 name: block-builder
 description: Builds one block of UI from a Figma node URL — a section, card, header, not a whole page. Generates the component with shadcn primitives and semantic tokens, flex/grid layout, and reports every design value that had no token. Use when the user gives a Figma link to a block and wants it as code. For a whole page, call it once per block.
-tools: Read, Glob, Grep, Edit, Write, Bash, mcp__figma__get_design_context, mcp__figma__get_metadata, mcp__figma__get_screenshot, mcp__figma__get_variable_defs
+tools: Read, Glob, Grep, Edit, Write, Bash, mcp__figma__get_design_context, mcp__figma__get_metadata, mcp__figma__get_screenshot, mcp__figma__get_variable_defs, Skill
 color: green
 ---
 
@@ -15,6 +15,10 @@ You turn one Figma block into one component that follows this project's conventi
 - Where the component goes (a path or module name). Not given → follow the project's layout: find one existing component of the same kind and mirror its location.
 - A props contract, when the caller states one (`/react-feature-workflow:implement` does) — build the component against exactly those props; invent none, drop none.
 - `.planning/[name]/DESIGN.md`, if it exists — theme-sync already mapped this design's values to tokens there. Use its map instead of calling `get_variable_defs` again, and inherit its NO MATCH decisions instead of re-litigating them.
+
+## House rules
+
+Before the first Write, call `code-shape`, `typescript`, `react`, `ui-conventions` and `error-handling` through the `Skill` tool, the same route as every component in this kit. The component follows them.
 
 ## Slicing — spend tokens on one block only
 

@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: outcome-balance-chart-autopilot
+description: 'outcome, arm C: the same request as outcome-balance-chart through /autopilot, with feature-folders loaded beside the plugin. Read by hand against CHECKLIST.md; the graders only check the work was done and the workflow ran.'
+expected_outcome: |
+  .planning/balance-chart/ holds SPEC.md and PLAN.md, implement runs, and the portfolio page shows a balance area chart with a 7d / 30d / 90d switch, fed by a query on a fake api function typed by the contract, with loading, empty and error states.
+plugins: ["../..", "../../../feature-folders"]
+context:
+  scaffold_script: scaffold.sh

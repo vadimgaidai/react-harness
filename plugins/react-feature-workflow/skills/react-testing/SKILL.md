@@ -1,56 +1,56 @@
 ---
 name: react-testing
-description: What a component or form test should prove and how to review one — real QueryClient over mocked hooks, awaited async UI, pending/failure/retry covered, real assertions over a passing stub. Use when writing a test for a component, hook, form or query state, or reviewing a test file.
+description: What a React test must prove and how to review one. Use when writing or reviewing a `*.test.tsx`, `*.test.ts` or `*.spec.tsx` file, or any test that uses Vitest, Jest, React Testing Library (`render`, `screen`, `getBy*`, `findBy*`, `waitFor`, `userEvent`), MSW (`server.use`, `http.get`, `HttpResponse`), `vi.mock`/`jest.mock`, `QueryClientProvider` in a test, a router or i18n in a test, Vitest Browser Mode, or tests a component, hook, form submit, query loading/error state, or unmount cleanup.
 ---
 
 # React testing
 
-Code shapes: [references/component-and-query.md](references/component-and-query.md),
-[references/form-and-unmount.md](references/form-and-unmount.md). This skill does not change
-the workflow: `verify` still runs existing tests and writes none; `implement` or the user
-writes tests where the project has a runner, and this skill guides what they assert and how
-`review` reads them.
+- Assert what the user sees or what the network received, never a state variable or a call count on the component's own internals.
+- Find elements the way a user does: `getByRole` with its accessible name first, then `getByLabelText`, then `getByText`; `getByTestId` only for an element with no role and no label, so the test also proves the accessible names the UI rules require.
+- Render with the real translations of the project's main language, so a test reads what the user reads and a missing key fails it; match text with a loose regex on its meaning (`/save/i`), so a reworded string does not break the test.
+- Mock only the network boundary (an MSW handler, the HTTP client), never the component or hook under test, or the test only proves the mock was called.
+- Run a query-backed component through a real `QueryClient` with `retry: false` and a `<Suspense>` around it, never a mocked `useQuery`/`useMutation` return value, which skips the states `tanstack-query` really produces.
+- A component that reads the URL renders inside the project's router with an in-memory history, starting from a real URL, so the test proves filters restore from a link and survive Back (`routing`).
+- Await async UI with `findBy*` or `waitFor`, never a fixed sleep, which is slower and still racy.
+- Give pending, failure and the retry after a failure each its own test beside the success case; pending is found by its role (`status`, `aria-busy`), not by a "Loading" text the design does not have.
+- In a form test, type, submit, and assert both the rendered error text and the payload the network received, not only that `onSubmit` fired.
+- Where a component holds a subscription, timer or listener, unmount it and assert the resource is gone, not only that unmount did not throw.
+- Cite as a passing check only a real run of the project's runner over real assertions; a script that prints `PASS` is a fixture.
 
-Check `package.json` once per session for the runner and the testing library in use (Vitest,
-Jest, React Testing Library) — the APIs named below are Testing Library's.
+Check `package.json` once per session for the runner (Vitest, Jest), Vitest Browser Mode (`vitest-browser-react` and a `@vitest/browser-*` provider), and the router; the APIs named here are Testing Library's. `verify` runs existing tests and writes none; `implement` or the user writes them where the project has a runner.
 
-## What a test proves
+## Example
 
-- A test asserts the observable result of a user action — what is on screen, what request
-  body was sent — never an implementation detail: a state variable's value, a call count on a
-  function internal to the component under test.
-- The behaviour under test is not mocked away. Mock the network boundary (the HTTP client, an
-  MSW handler) so the real hook and the real component run; a test that mocks the hook under
-  test only proves the mock was called.
-- Async UI is awaited through the testing library's own queries (`findBy*`, `waitFor`) — never
-  a fixed `setTimeout`/arbitrary sleep, which is both slower than necessary and still racy.
-- Pending, failure, and the retry after a failure each get their own test. A suite that only
-  covers the happy path proves nothing about what the user sees when the request is slow or
-  fails.
-- A form test types into the fields, submits, and asserts both the rendered error text and the
-  payload the mocked network boundary actually received — not just that `onSubmit` fired.
-- A query-backed component is tested through a real `QueryClient` (retries off, so a test
-  failure doesn't wait out the retry backoff) — never a mocked `useQuery` return value, which
-  stops testing the states `tanstack-query` actually produces.
-- Cleanup is tested where it matters: unmount the component and assert the subscription,
-  timer or listener it held is actually gone, not just that unmount didn't throw.
+A mocked `useQuery` against a real `QueryClient` with a mocked request:
 
-## Real evidence, not a stub
+```tsx
+vi.mock("@tanstack/react-query", () => ({
+  useQuery: () => ({ data: { id: "1", name: "Widget" }, isPending: false }),
+}))
 
-A passing check is a real run of the project's runner over real assertions. A script that
-prints `PASS` without asserting anything — a fixture this kit's own eval scaffolds use to
-stand in for a project's test suite — is a fixture, not evidence; a review of a test file says
-which one it is looking at before citing it as a passing check.
+test("shows the item", () => {
+  render(<ItemBadge id="1" />)
+  expect(screen.getByText("Widget")).toBeInTheDocument()
+})
+```
 
-## Reviewing
+```tsx
+test("shows the item once the request resolves", async () => {
+  server.use(http.get("/api/items/:id", () => HttpResponse.json({ id: "1", name: "Widget" })))
 
-In order of how often it hurts:
+  renderWithProviders(<ItemBadge id="1" />)
 
-- an assertion on an internal state variable or a call count instead of the rendered result
-- the component or hook under test itself mocked, rather than only the network boundary
-- a fixed sleep/timer instead of `findBy*`/`waitFor` for async UI
-- only the happy path tested — no pending, failure or retry-after-failure case
-- a form test that checks `onSubmit` fired but not the error text or the sent payload
-- `useQuery`/`useMutation` mocked instead of run through a real `QueryClient`
-- a subscription or timer never asserted gone after unmount
-- a test file whose assertions are actually a `PASS`-printing stub, cited as if it were a run
+  expect(await screen.findByText("Widget")).toBeInTheDocument()
+})
+```
+
+The first passes even when the component asks for the wrong key; the second runs the real key, `select` and error handling.
+
+## References
+
+- [references/setup.md](references/setup.md): before the first test in a project: `renderWithProviders` (query client, `Suspense`, translations), the MSW server, Vitest Browser Mode.
+- [references/component-and-query.md](references/component-and-query.md): a test for a component that reads a query: success, pending, failure, retry, and a subscription released on unmount.
+- [references/url-state.md](references/url-state.md): a test for a component or hook that reads the URL, in React Router or TanStack Router.
+- [references/form-and-unmount.md](references/form-and-unmount.md): a form test: the submitted payload, a server field error, the pending submit button.
+- [references/what-a-test-proves.md](references/what-a-test-proves.md): when a rule above seems not to fit the case, or a review needs the reason behind a finding.
+- [references/reviewing.md](references/reviewing.md): the questions `review` asks; not needed when writing code.

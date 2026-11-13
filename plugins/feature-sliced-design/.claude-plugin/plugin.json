@@ -2,7 +2,7 @@
   "name": "feature-sliced-design",
   "displayName": "Feature-Sliced Design",
   "description": "Feature-Sliced Design guardrails: a skill that answers layer and import questions, a module scaffolder, and hooks that reject a misplaced file, a wrong filename, an upward/sideways import, or model content in the wrong place before it is written — not in review after.",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": {
     "name": "Vadym Haidai",
     "url": "https://github.com/vadimgaidai"

@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: review-engineering-remarks
+description: 'review + react + tanstack-query + typescript + code-shape: each remark cited with its line; a try/catch at a real boundary is not one. Drawn from: DAPE_FE activity-transactions, activity-transaction-detail and chart-interval-morph REVIEW, Engineering remarks sections'
+expected_outcome: |
+  The reply cites the effect that copies a prop into state, the per-query retry override, the cast and the one-caller invalidation helper by file:line, and does not report the try/catch around JSON.parse in use-stored-kind.ts as a lost or swallowed error.
+context:
+  scaffold_script: scaffold.sh

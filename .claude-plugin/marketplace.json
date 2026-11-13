@@ -15,7 +15,7 @@
       },
       "displayName": "React Feature Workflow",
       "source": "./plugins/react-feature-workflow",
-      "description": "Build features from a spec, not one long chat: /spec writes the behaviour a human signs off, /plan turns it into modules that cite its acceptance criteria plus a sliced API contract, /implement builds them, /review checks the diff against the convention skills — each in a fresh session, so context stays small. Ships React 19, TanStack Query and shadcn/ui skills plus Figma agents.",
+      "description": "Build React features from a spec, not one long chat: spec, plan, implement, verify and review are each a command that reads the file the stage before wrote, and /review checks any branch against the convention skills with no spec. Ships React 19, TanStack Query and shadcn/ui skills plus Figma agents.",
       "category": "workflow",
       "keywords": [
         "react",
@@ -28,7 +28,7 @@
         "shadcn-ui",
         "figma"
       ],
-      "version": "0.9.1"
+      "version": "0.10.0"
     },
     {
       "name": "feature-sliced-design",
@@ -45,7 +45,7 @@
         "fsd",
         "architecture"
       ],
-      "version": "0.3.1"
+      "version": "0.3.2"
     },
     {
       "name": "feature-folders",
@@ -63,7 +63,7 @@
         "feature-folders",
         "structure"
       ],
-      "version": "0.2.1"
+      "version": "0.2.2"
     }
   ]
 }

@@ -6,7 +6,7 @@ Spec-driven development for React in [Claude Code](https://claude.com/claude-cod
 
 One long chat produces one big diff and nothing to check it against. The spec was in your head, the plan was in the model's, and by the time you review there is no document that says what "done" meant.
 
-The kit splits that chat into stages. Each stage writes a file, and the next stage starts a fresh session and reads it.
+The kit splits that chat into stages. Each stage is a command that writes a file, and the next one reads it.
 
 ```
 /spec       .planning/<name>/SPEC.md       what the user sees, acceptance criteria with ids
@@ -17,7 +17,7 @@ The kit splits that chat into stages. Each stage writes a file, and the next sta
 /refine     code                           applies what verify and review found, one item at a time
 ```
 
-You read and fix `SPEC.md` before a single module exists. Request and response shapes come from your OpenAPI file, cut down to the endpoints the spec names. Figma frames are read by subagents, so their payload never lands in your session.
+You read and fix `SPEC.md` before a single module exists. `verify` and `review` run in subagents that never saw the build. Request and response shapes come from your OpenAPI file, cut down to the endpoints the spec names. Figma frames are read by subagents, so their payload never lands in your session.
 
 ## Install
 
@@ -38,11 +38,17 @@ claude plugin install feature-folders@vadimgaidai --scope project         # modu
 ## What to type
 
 ```bash
-# a feature with data, forms or state — then plan, implement, verify, review
+# a review of the branch you are on — no spec, nothing to set up
+/react-feature-workflow:review
+
+# a feature with data, forms or state: spec, then plan, implement, verify, review
 /react-feature-workflow:spec add comments to articles
 
 # a change to a module that exists
 /react-feature-workflow:spec change: paginate the comment list
+
+# a small change: short spec and plan, the code, verify and review, one command
+/react-feature-workflow:autopilot show the token symbol next to amounts
 
 # a landing page from Figma — theme-sync once, then spec layout: …
 @react-feature-workflow:theme-sync <figma-url>
@@ -58,7 +64,7 @@ Worked examples with what lands on disk: [docs/USE-CASES.md](./docs/USE-CASES.md
 
 ## Plugins
 
-- [react-feature-workflow](./plugins/react-feature-workflow): the six commands, nine convention skills that load while Claude writes the matching layer, three Figma and bug agents.
+- [react-feature-workflow](./plugins/react-feature-workflow): `feature` and the six stage commands, nine convention skills that load while Claude writes the matching layer, three Figma and bug agents.
 - [feature-sliced-design](./plugins/feature-sliced-design): hooks that reject a file on the wrong layer, a wrong filename, a barrel import or an upward import before it is written.
 - [feature-folders](./plugins/feature-folders): the same for projects without layers: global buckets plus feature, page and layout modules. Blocks new files only, so an old tree is left alone.
 

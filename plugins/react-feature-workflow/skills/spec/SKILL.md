@@ -1,6 +1,7 @@
 ---
 name: spec
-description: Turns a request into `.planning/[name]/SPEC.md` — user-visible behaviour, UI states, permissions, failure scenarios and acceptance criteria with ids — before any module, file or library is named. Classifies the request as block / layout / feature / change, hunts the gaps the request left unsaid by taxonomy, asks at most five questions and records the rest as assumptions. Use when the user wants to plan, spec, scope or start a feature, module, change or refactor; the first command of the workflow.
+description: Turns a request into `.planning/[name]/SPEC.md` — user-visible behaviour, UI states, permissions, failure scenarios and acceptance criteria with ids — before any module, file or library is named. Classifies the request as block / layout / feature / change, hunts the gaps the request left unsaid by taxonomy, asks at most five questions and records the rest as assumptions. Use when the user wants to plan, spec, scope or start a feature, module, change or refactor; the first command of the full workflow. A small change to existing code that should go straight to code is `autopilot`.
+disable-model-invocation: true
 ---
 
 # Spec
@@ -120,6 +121,22 @@ precondition may use GIVEN/WHEN/THEN instead, never both grammars for the same r
 to nine acceptance criteria, each citing at least one R-id. Prefer a criterion that can be
 established from the code or a test over one that needs a human with a browser.
 
+### Implementation that leaks in
+
+A rule names what the user does and sees, not the hook or component that does it.
+
+```
+no   R-2 WHEN the user picks a sort order THE UI SHALL call useComments({ sort }) and re-render CommentList
+yes  R-2 WHEN the user picks "Oldest first" THE UI SHALL list the comments from the oldest to the newest
+```
+
+A criterion is checked against what the user sees, not against a function or a path.
+
+```
+no   AC-3 formatCommentDate() in src/shared/lib/date.ts returns "2 hours ago" (R-4)
+yes  AC-3 A comment posted two hours ago shows "2 hours ago" under its author (R-4)
+```
+
 ## 4 — Check the file before handing it over
 
 Read back what you wrote and report, in the chat, anything that fails:
@@ -127,16 +144,11 @@ Read back what you wrote and report, in the chat, anything that fails:
 - `R-` and `AC-` ids unique and sequential;
 - every AC cites at least one R-id, and every R-id is cited by at least one AC — name the
   uncovered ones;
-- no `src/`, no `use[A-Z]`, no `.tsx`, no `@/`, no library or component name in the body;
+- no `src/`, no `use[A-Z]`, no `.tsx`, no `@/`, no library or component name outside `## Request`, which stays verbatim;
 - feature and change specs ≤ 120 lines, layout ≤ 40.
 
 Over the cap or uncovered → say so and stop. Never trim the file silently to fit, and never
 invent a criterion to cover a rule.
-
-## 5 — Hand off
-
-"Read and fix `.planning/[name]/SPEC.md`, then run `/react-feature-workflow:plan`." For a
-**block**, the `block-builder` call from step 0 and nothing else.
 
 ## Quality bar
 
@@ -144,3 +156,8 @@ invent a criterion to cover a rule.
 - Silence is not permission: a behaviour nobody named goes to Open questions or Assumptions,
   never into an implicit requirement.
 - The same request produces the same spec twice.
+
+## 5 — Hand off
+
+"Read and fix `.planning/[name]/SPEC.md`, then run `/react-feature-workflow:plan`." For a
+**block**, the `block-builder` call from step 0 and nothing else.

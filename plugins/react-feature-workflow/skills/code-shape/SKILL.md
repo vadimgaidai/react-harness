@@ -1,108 +1,49 @@
 ---
 name: code-shape
-description: Less code, control flow, function and parameter shape, naming — the slop a linter can't decide. Use when writing or reviewing any .ts/.tsx with branching logic, a helper, or a utility.
+description: House rules for the shape of every .ts/.tsx file — comments, function parameters, options objects, if/return blocks, guard clauses, ternaries, loops over arrays (map, filter, find, reduce), helpers and utils, setters, constants, naming. Use whenever writing, editing or reviewing TypeScript or TSX, a function, a hook's helper or a utility, even for a small change.
 ---
 
 # Code shape
 
-House style, not laws of programming. Every rule with the shape it replaces:
-[references/shapes.md](references/shapes.md).
+- The least code that does the job: no wrapper that only forwards, re-export that only renames, variable that only repeats the returned expression, default branch for a state the input cannot hold, check the code after it already handles, or parameter nothing passes yet.
+- No comments. Two marks only: `// TODO:` for work decided to be done later, `// !` for important logic a reader must not break. JSDoc that restates the signature, banners and "for now" notes are comments too. A tool directive with its reason (`eslint-disable`, `@ts-expect-error`) is not a comment.
+- Two parameters at most in a function of ours: the first stays positional, the rest go into one typed options object, so the call site names every value and their order stops mattering. A callback whose signature a library sets (`map`, `reduce`, an event handler) keeps it.
+- Guard clauses first: exit cases return at the top, the happy path stays unindented.
+- A `return` sits in a braced block, never `if (x) return y` on one line, so every exit is visible when scanning the left edge; same for any single-statement `if`.
+- A ternary chooses between values, never between behaviours, and never nests, because a nested one hides which condition wins.
+- Collections by meaning: `map`/`filter`/`find`/`some`/`every` where they say the operation; no search repeated per element, value recomputed per iteration or intermediate array nobody reads.
+- A branching body writes the value in every `return` and annotates the return type, so a new branch cannot widen the type unnoticed; implicit arrow returns are for one expression. A component's JSX return is inferred.
+- No boolean parameters, since `formatAmount(total, true)` says nothing at the call site: split the function, or fold the flag into the options object.
+- A setter for a group of fields takes a patch (`Partial<State>`), never the whole state re-passed with one field changed: a call that forgets the spread silently resets the other fields.
+- A literal another side reads back (search param, storage key, header) and a number with a domain meaning get a named constant, so the two sides agree through one name.
+- A `parse*`/`get*`/`format*` does that one thing, or its name says what else it does.
+- A pure, named, multi-expression helper in a hook file moves where the structure skill puts a module's pure functions.
+- Every user-facing string (a toast, a label, a schema message, a fallback like `"Untitled"`) goes through `t("key")`, in a `.ts` file as much as in a component; `ui-conventions` owns the detail.
+- Names say the domain, not the type: no `data`, `flag`, `handleClick` (a handler is named by what it does: `submit[Entity]`, `openFilters`), no `Helper`/`Manager`/`Utils`/`Service` or `2` suffix; grep before naming.
+- Extract a function for a name or a responsibility, not for size; one that only forwards is inlined.
 
-- **The least code that does the job.** Reuse the primitive, library call or idiom that
-  already exists. Delete a wrapper that only forwards a call, a re-export that only renames,
-  a variable that only repeats the expression `return`ed on the next line, a default branch
-  for a state the input is guaranteed never to hold, a parameter nothing passes yet. A single
-  use does not make a variable redundant, and a wrapper that owns a boundary (the API module,
-  the adapter around a dependency) stays. A diff well past its sibling's size for the same
-  role is a reason to look for these, not a finding by itself.
-- **No comments.** Two exceptions: `// TODO: <what is left>` for deferred work and
-  `// ! <note>` for a reason or constraint the code cannot show. Directives with a reason
-  (`eslint-disable`, `@ts-expect-error`) are not comments. Restating the line, step
-  narration and section headers like `// Handle errors` go.
-- **Two parameters is the ceiling.** A third becomes a typed options object.
-- **Guard clauses first.** Exit cases return at the top; the happy path is unindented.
-  Nesting past two levels inverts the conditions first; extract only when the inner block is
-  an operation with a name.
-- **A `return` is a block.** Never `if (x) return y` on one line — the `return` sits on its
-  own line inside braces. Same for a single-statement `if`.
-- **Ternaries choose values, never behaviours, never nest.** A second condition is a named
-  boolean, a named value, a lookup map or a sub-component.
-- **Collections by meaning.** `map`/`filter`/`find`/`some`/`every` where they say the
-  operation and keep behaviour; a loop that reads is not rewritten. What goes is repeated
-  work: a search over one collection repeated for each element of another, a value
-  recomputed per iteration, an intermediate array nobody reads. A `Map`/`Set` or a value
-  computed once replaces it when the task warrants — with order, duplicates, missing values
-  and side effects checked (`find` returns the first match; filling a `Map` keeps the last).
-  `map` with `find` inside, or the inner loop moved into a helper, is the same repetition.
-  A task that must visit every pair keeps its nested traversal.
-- **Return explicitly when the body branches.** Implicit arrow returns are for one
-  expression. A branching body writes the value in every `return` and annotates the type.
-- **No boolean parameters.** Split the function, or fold the flag into the options object.
-- **A setter takes a patch.** A function that updates a group of fields — filters, a
-  settings object, a draft — takes `Partial<State>`, never the whole state re-passed with
-  one field changed. The test: adding a field touches the setter and no existing call
-  site. A hook whose state lives in the URL is this shape over `useSearchParams`:
-  `routing/references/search-params.md`.
-- **A literal that crosses a boundary is named.** A search-param value, a storage key, a
-  header, a discriminator read back from the URL — the string the other side reads gets a
-  constant beside the code that reads it. A translation key, a `className`, an `as const`
-  member or a string the code only passes to itself is not.
-- **The name covers the behaviour.** `parse*`, `get*`, `format*` promise one operation. A
-  body that also sorts, dedupes in a way callers rely on, or caches either loses the extra
-  behaviour or gets a name that says it.
-- **A pure helper leaves the hook file.** A named, module-scope function in a `use-*.ts`
-  that uses no React and does more than one expression is testable without React and lives
-  where the structure skill puts a module's pure functions. A one-expression parser used
-  once stays inline.
-- **Names say the domain, not the type.** `comments` not `data`, `isOwner` not `flag`,
-  `submitComment` not `handleClick`. No `Helper`/`Manager`/`Utils`/`Service` suffix, no `2`
-  suffix — grep first.
-- **Extract for a name, not for size.** A function earns its place by naming an operation or
-  owning a responsibility (a hook owns its state), one caller or ten. A chunk that only
-  forwards, or was cut out to shorten the parent, is inlined.
+## Example
 
-## Reviewing
+A third parameter goes into an options object; the `reduce` callback keeps its three because the library sets that signature.
 
-Two kinds of finding. A **style violation** is reported with the rule and the line; that is
-enough. An **engineering remark** carries the argument — what the construct fails to name,
-own or simplify at this spot; the data that already determines the value; the work repeated
-per element. "Longer" alone is not a finding.
+```ts
+const formatAmount = (value: number, decimals: number, currency: string) => …
+formatAmount(total, 2, currency)
+```
 
-Style violations, in order of how often they hurt:
+```ts
+interface IFormatAmountOptions {
+  decimals: number
+  currency: string
+}
 
-- any comment that is not `TODO:` / `!` / a directive
-- nested ternary, or a ternary choosing between behaviours
-- a third positional parameter in a function of ours (an external API signature or a
-  required callback keeps its shape)
-- a one-line `if (…) return` or braceless `if`
-- a branching body with a bare `return`, an implicit return type or a branch returning a
-  different type
-- a boolean flag parameter
+const formatAmount = (value: number, { decimals, currency }: IFormatAmountOptions) => …
+formatAmount(total, { decimals: 2, currency })
 
-Engineering remarks, each with its argument:
+const weighted = prices.reduce((sum, price, index) => sum + price * weights[index], 0)
+```
 
-- a wrapper that only forwards, a re-export that only renames, a variable that only repeats
-  the returned expression, a default branch for a state the input is guaranteed never to
-  hold — with the guarantee named
-- a search over a second collection repeated per element, a value recomputed per iteration,
-  an intermediate array nobody reads — with the repetition named and the replacement's
-  equivalence checked (order, duplicates, missing values, side effects)
-- depth past two levels where inverting a condition would flatten it
-- a generic or type-named identifier
-- a function that only forwards or exists to shorten its parent — why the name adds nothing
-- a magic number with a domain meaning, or a string literal read back across a boundary
-  (URL, storage, header) with no name
-- a setter that re-passes every field for a one-field change — with the call sites named
-- a `parse*` / `get*` / `format*` whose body sorts, dedupes or caches beyond its name — with
-  the caller that depends on it
-- a named, non-trivial pure function at module scope in a hook file — with where the
-  structure skill puts it
+## References
 
-Never a finding by itself: a single caller, an intermediate variable, a long file, a
-`try/catch`, an optional chain, a fallback, a loop. Each needs the argument above.
-
-## Overlap with the project's lint
-
-A line the project's own lint reported in this review session goes under Checks and is
-not re-derived. A rule merely present in the config is not proof it ran: without that
-diagnostic in hand, the finding stands.
+- [references/shapes.md](references/shapes.md): when a rule's edge is in doubt (when a variable, wrapper or `default` branch stays; when a `Map` may replace a `find`; what a block `return`, a setter patch, a boundary constant or a moved hook helper looks like), or when a finding needs the shape to cite. Each rule has a section under its own name, cited as `code-shape §<section>`.
+- [references/reviewing.md](references/reviewing.md): the questions `review` asks; not needed when writing code.

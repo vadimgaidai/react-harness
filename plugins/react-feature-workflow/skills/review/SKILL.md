@@ -1,6 +1,9 @@
 ---
 name: review
-description: Checks a change against the project's and this kit's code rules, for unnecessary complexity and for inefficient data handling — reading only the context each question needs, and proving every finding before reporting it. Reports only; fixes are a separate request through `refine`. Takes an optional angle argument (`skills`, `structure`, `sibling`, `slop`) and a git range or paths. Use before opening a PR, or when the user asks to review changes.
+description: Checks a change against the project's and this kit's code rules, for unnecessary complexity and for inefficient data handling — reading only the context each question needs, and proving every finding before reporting it. Writes the report to `.planning/[name]/REVIEW.md` when the work has a planning folder. Reports only; fixes are a separate request through `refine`. Takes an optional angle argument (`skills`, `structure`, `sibling`, `slop`) and a git range or paths. Use before opening a PR, or when the user asks to review changes.
+allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/reviewing-sections.mjs)
+argument-hint: "[angles] [range or paths] [.planning/<name>]"
+context: fork
 ---
 
 # Review
@@ -24,7 +27,7 @@ Say what is under review before reading a line, in this order of precedence:
    untracked work.
 
 ```bash
-git merge-base HEAD origin/HEAD 2>/dev/null || git merge-base HEAD main
+base=$(git merge-base HEAD origin/HEAD 2>/dev/null || git merge-base HEAD main)
 git diff --stat "$base"; git diff --name-status "$base"   # branch + working tree vs base
 git ls-files --others --exclude-standard                  # untracked files, part of the change
 git diff --stat A..B; git diff --name-status A..B         # a commit range the user named
@@ -39,8 +42,14 @@ Added and removed lines are both the change. A finding is about a problem the ch
 introduced or made worse — a dropped guard and a deleted export get a verdict like an added
 line. A defect that was already there in neighbouring code is not a finding.
 
-Argument: `review [angles] [range|paths]`. Angles are `skills`, `structure`, `sibling`,
+Arguments: $ARGUMENTS
+
+Argument: `review [angles] [range|paths] [.planning/<name>]`. Angles are `skills`, `structure`, `sibling`,
 `slop`; none means all four. A focused run is a shorter report, never a narrower scope.
+
+You are done when the report is in your reply and, when the arguments name `.planning/<name>`
+or a `.planning/<name>/` folder exists for this work, in `.planning/<name>/REVIEW.md` too
+(step 5). That file is your output, not an edit: "edits nothing" in step 6 means the code.
 
 ## 2 — Find the rules that apply
 
@@ -50,7 +59,7 @@ names, and never a plugin's presence as the precondition for a rule written down
 - `CLAUDE.md`, and every `.claude/rules/*.md` whose frontmatter `paths:` matches a changed
   file (or that has no `paths:`).
 - A structure skill loaded in this session (`feature-sliced-design`, `feature-folders`, the
-  project's own): its `## Reviewing` section, and a check script it names
+  project's own): its `references/reviewing.md`, and the check script it names
   (`structure-check.sh <changed files>`), whose lines go under **Checks**. No stated
   structure rules → the `structure` angle says so and makes no placement finding.
 - The convention skill a hunk's content puts it under: an effect, state, memo, context or
@@ -61,8 +70,9 @@ names, and never a plugin's presence as the precondition for a rule written down
   `switch` on a union → `typescript`; branching, a helper, a loop over a collection →
   `code-shape`. Content decides, not the folder or the file name: a `use-*-filters.ts` in
   `hooks/` whose values come from `useSearchParams` is `routing` (and `code-shape` for its
-  helpers). Read that skill's `## Reviewing` section; open a reference file only for the
-  one shape a finding needs to cite.
+  helpers). That skill's review questions (its `references/reviewing.md`) are already in this prompt, under
+  [Review questions by skill](#review-questions-by-skill) at the end; do not call the skill
+  for it. Open a reference file only for the one shape a finding needs to cite.
 - The project's checks, as `package.json` defines them: typecheck, lint, tests. Run them
   without installing anything; record pass / fail and the output tail under **Checks**.
   A failing check is a finding and sets the verdict; it does not stop the review.
@@ -100,7 +110,8 @@ module and why; none fits → the `sibling` angle says so.
 
 ## 4 — The questions
 
-**`skills` — is this hunk an instance of a sentence in its governing skill's `## Reviewing`?**
+**`skills` — is this hunk an instance of a sentence in its governing skill's review questions
+(below, under [Review questions by skill](#review-questions-by-skill))?**
 A candidate quotes the sentence and the line. No sentence applies → no finding; there is no
 spirit of the skill. A hunk that has a rubric's shape but meets the exception the same skill
 states — a draft reset by `key`, a nested loop that must visit every pair, a sort on a local
@@ -133,7 +144,7 @@ cost is *here* and what you checked to know.
    absence confirms.
 7. **Repeated work over collections** — a search over one collection repeated for each
    element of another, a value recomputed per iteration, an intermediate array nobody
-   reads. Name the repetition (`code-shape` §Collections). A loop is not a finding; a
+   reads. Name the repetition (`code-shape` §Collections by meaning). A loop is not a finding; a
    nested traversal that the task needs is not a finding; `map` with `find` inside or an
    inner loop moved into a helper does not remove the repetition.
 
@@ -190,8 +201,8 @@ Layout:
 - **Not this skill's job** — one line: `/react-feature-workflow:verify` for the acceptance
   criteria and the contract, `/code-review`, `/security-review`, `/simplify`.
 
-Write the same report to `.planning/<name>/REVIEW.md` when a `.planning/<name>/` folder
-exists for this work. Frontmatter `status:` is `ready` only when every project check was
+Write the same report to `.planning/<name>/REVIEW.md` when the arguments name that folder
+or a `.planning/<name>/` folder exists for this work; a reply alone is not done. Frontmatter `status:` is `ready` only when every project check was
 run and passed; `checks-failed` when one is red; `checks-skipped` when one could not run,
 with the reason. Findings are `- [ ]` items with their four parts and a fenced `code`
 block where the fix is exact enough to paste; open questions sit under `## Open questions`
@@ -205,3 +216,16 @@ implementer. When the user asks for the fixes, that is `/react-feature-workflow:
 it reads `REVIEW.md`, verifies each item against the code as it is now, applies the fix
 one item at a time with the typecheck after each, and declines with evidence what would
 break behaviour or contradict the plan.
+
+## Review questions by skill
+
+Each convention skill's `references/reviewing.md`, read from the skill when this review
+started. These are the sentences the `skills` angle quotes; a file reported as not found
+means that skill states no review questions, and no `skills` finding cites it.
+
+!`${CLAUDE_SKILL_DIR}/scripts/reviewing-sections.mjs`
+
+## Last step
+
+With a `.planning/<name>/` folder for this work, write `.planning/<name>/REVIEW.md` (step 5's
+layout and `status:`) before you reply; then reply with the report.

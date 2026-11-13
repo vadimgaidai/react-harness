@@ -1,139 +1,76 @@
 ---
 name: tanstack-query
-description: TanStack Query v5 policy for a client-rendered SPA — what the shared QueryClient already decides, what belongs in a query key, when to use enabled/select/useQueries/placeholderData, and how a mutation touches the cache. Use when writing or reviewing queries, mutations, cache invalidation, pagination, prefetching, or a data-fetching effect.
+description: TanStack Query v5 rules for a client-rendered SPA — what the shared QueryClient already decides (retry, staleTime, onError), what goes in a query key, enabled/skipToken/select/useQueries/placeholderData, isPending/isFetching states, and how a mutation touches the cache. Use whenever a task writes or reviews useQuery, useMutation, useInfiniteQuery, useSuspenseQuery, queryOptions, ensureQueryData or queryClient.query, a query key or key factory, invalidateQueries, setQueryData, an optimistic update, pagination, prefetching, a retry or staleTime setting, or a fetch inside useEffect.
 ---
 
 # TanStack Query v5
 
-Client-rendered SPA only. Nothing here is about SSR — no `dehydrate`/`hydrate`, no `HydrationBoundary`, no per-request client. If a snippet from the internet has those, it is answering a different question. Named rules (`isPending`, `throwOnError`, `placeholderData: keepPreviousData`) are v5's API; check `package.json` once in the session before applying one — a v4 project reads `isLoading`/`cacheTime`/`useErrorBoundary` instead, and this skill is not written for it.
+TanStack Query v5 in a client-rendered SPA: no `dehydrate`/`hydrate`, no `HydrationBoundary`, no per-request client. Check `package.json` once in the session, since a v4 project reads `isLoading`/`cacheTime`/`useErrorBoundary` and these rules do not fit it; in a v5 release whose `QueryClient` has `query()`, `ensureQueryData`, `fetchQuery` and `prefetchQuery` are deprecated in its favour (`query({ ...options, staleTime: "static" })`, `query(options)`, `query(options).catch(noop)`). This skill owns what goes inside a query or a mutation; where the client, query and mutation files live and which layer may invalidate which is the structure skill loaded in this project.
 
-**This skill owns what goes inside a query or mutation.** Placement and naming — where the client, the query file and the mutation file live, which layer may invalidate which — is the structure skill loaded in this project.
+### Shared client
 
-## Read the shared client once, then stop repeating it
+- Open the shared `QueryClient` before the first query; a per-query `staleTime`, `gcTime`, `retry` or `refetchOn*` that repeats it is noise.
+- Override a default only for data that really is more or less volatile, with the reason in a `// !` note on that line.
+- No local `onError` for what the `QueryCache`/`MutationCache` handlers already do (401, token refresh): two refresh flows race.
+- `mutations: { retry: false }` stays: a retried POST is a duplicate write.
+- A background refetch error toasts from the shared `QueryCache` `onError`, only when the query already has data, with the text from the query's `meta.errorMessage`; reporting to the tracker is `error-handling`.
 
-Open the project's shared `QueryClient` before writing your first query. It typically already sets `staleTime`, `gcTime`, `refetchOnWindowFocus`, `refetchOnReconnect`, a `retry` predicate that gives up on 4xx, and `QueryCache`/`MutationCache` `onError` handlers.
+### Keys
 
-- **Do not restate a default per query.** `staleTime: 1000 * 60 * 5` on a query when the client already says that is noise the next reader has to diff.
-- Override a default only when this query's data really is more or less volatile than the rest, and say why in a short comment on that line.
-- **Auth belongs to the cache handlers, not to your hook.** If the client's `QueryCache`/`MutationCache` `onError` handles 401 and token refresh, never add a local `onError` that re-handles it — you get two refresh flows racing.
-- `mutations: { retry: false }` is deliberate. A retried POST is a duplicate write.
+- Every input the `queryFn` reads is in the key: id, filters, page, sort, locale.
+- Keys come from the entity's factory and are called (`keys.byId(id)`, `keys.all()`), never a hand-written array at a call site.
+- `queryFn` is always an arrow (`() => [entity]Api.getMe()`), since the lint rule skips a bare reference.
+- A filtered key has an unfiltered parent (`lists()` beside `list(filters)`); an infinite query has its own `infinite(filters)`.
+- Key values are primitives or plain objects, never a `Date`, `Map`, class instance or function; one `queryFn`, one key.
 
-## Query keys
+### Reads
 
-The key is the cache identity. Get it wrong and you either serve stale data for the wrong inputs or lose the cache entirely.
+- Declare `queryOptions` in the entity; the component never re-declares the key or the fetcher, and the response type comes from the contract.
+- A region reads with `useSuspenseQuery([entity]Queries.x(...))` inside a `QueryBoundary` (`Suspense`, an error boundary and `QueryErrorResetBoundary` in one component, `react` references/code-splitting.md), so `data` is present and the boundary owns loading and the failed first load; a route whose loader filled the cache reads the same way and the route owns those states (`routing`).
+- `useQuery` with inline states stays where a fallback is wrong, and the choice names which: a read disabled until its input exists, a request cancelled by `signal` (cancellation does not work under Suspense), a read refetched per keystroke, or data the screen renders without.
+- A switch that changes the key (filter, sort, page, range) runs its setter in `startTransition`, so the shown data stays while the next key loads; under `useQuery` the same is `placeholderData: keepPreviousData`.
+- Suspense reads that load together start together, through `useSuspenseQueries` or a prefetch above the boundary: React 19 does not render the siblings of a suspended component, so two sibling `useSuspenseQuery` calls fetch one after the other.
+- A dependent read renders its reading component only once the input exists; under `useQuery` it passes `skipToken` as its `queryFn` until then, so the type narrows without a cast; `enabled` only where a manual `refetch()` must still work.
+- Derived value → `select` (the Compiler keeps an inline one stable); a data-driven number of queries → `useQueries`, `useSuspenseQueries` under Suspense.
+- `placeholderData` over `initialData` unless the complete object is at hand.
+- Never copy query data into `useState`, never fetch or refetch inside `useEffect`.
+- Pass `signal` to a request that can be superseded, which keeps that read on `useQuery`.
+- Prefetch on intent (`onMouseEnter`, `onFocus`) with the same options object the destination reads, beside the lazy-route preload; never a whole list on mount; TanStack Router's `defaultPreload: "intent"` does it through the route's loader.
 
-**Every input the response depends on is in the key** — id, filters, pagination, sort, locale. A parameter the `queryFn` uses but the key omits is a cache bug, not a style issue.
+### States
 
-### Half of that is the linter's job — leave it alone
+- Loading, empty and error are three renders: under Suspense the boundary's skeleton fallback, the component's own empty branch, and the boundary's error fallback with a retry; under `useQuery` `isPending` → skeleton and `isError` → inline error, narrowed on the state, never `data!`.
+- A refetch error over cached data never reaches the boundary (Suspense throws only when there is no data): the data stays on screen with an inline alert on `isRefetchError`; `isFetching` drives a subtle indicator under either hook.
+- `refetch()` is for a user's "retry this", never in place of `invalidateQueries`.
 
-Where `@tanstack/eslint-plugin-query` is enabled (`flat/recommended`), `exhaustive-deps` **errors** on a variable that the `queryFn` closes over and the key omits, and it resolves through the key factory: `keys.lists()` with `queryFn: () => api.getList(filters)` is a lint error, while `keys.list(filters)` passes. Don't hand-audit key completeness, and don't spend a review comment on it.
+### Mutations
 
-**But the rule only looks at an inline function.** Give `queryFn` a bare reference and it bails out silently, checking nothing:
+- Invalidate in `onSuccess`, narrowest first: `byId(id)` → `list(filters)` → `lists()` → `all()`; `all()` only on create and delete; never `invalidateQueries()` without a key; return the invalidation promise, so the mutation stays pending until the fresh data lands.
+- `setQueryData` only with the complete object the server returned, and only in the mutation's callbacks.
+- Optimistic updates only for cheap, reversible, frequent actions: applied once in `onMutate`, reconciled in `onSettled`; an action that can fire again before it settles skips the rollback and invalidates only when the last one settles (`isMutating({ mutationKey }) === 1`).
+- Cache work, navigation, toasts and storage writes go in the hook's `onSuccess`/`onError` or `mutate`'s per-call callbacks, never in an effect on `isSuccess`; `mutateAsync` only where a later step awaits it.
+- A callback added over spread shared options calls the original first and awaits or returns it.
+
+## Example
+
+A per-query option that repeats the shared client. The client's `retry` predicate already gives up on 4xx, so a 404 is not retried without the override:
 
 ```typescript
-queryFn: () => [entity]Api.getMe(),  // checked
-queryFn: [entity]Api.getMe,          // rule skips this object entirely
+queryKey: [entity]Keys.bySlug(slug),
+queryFn: () => [entity]Api.getBySlug(slug),
+retry: false,
+staleTime: 1000 * 60 * 5,
 ```
-
-**So always write the arrow form, even for a fetcher that takes no arguments.** It costs five characters and keeps the check armed for the day someone adds a parameter. The bare reference is an opt-out disguised as brevity.
-
-Also machine-owned and not worth reviewing by hand: `stable-query-client`, `no-unstable-deps`, `no-void-query-fn`, `no-rest-destructuring`, and the `queryOptions` / infinite / mutation property-order rules.
-
-### What no rule can see — this is the part you own
-
-- **Whether the key came from the factory at all.** A hand-written `["user", id]` at a call site passes every rule and is invisible to `keys.all()`.
-- **`lists()` vs `list(filters)`** — which one an invalidation should use, and whether the unfiltered parent key even exists. An infinite query has its own entry (`infinite(filters)`): it stores pages under a different shape than the plain list, so sharing `list(filters)`'s key merges two incompatible cache entries.
-- **The breadth of an invalidation.** Nothing checks that a single-item edit didn't sweep the entity.
-- **Serializability and stability.** A fresh object literal in a key is fine — TanStack hashes deterministically — but a `Date`, a `Map`, a class instance or a function is not. Normalize to a primitive or a plain object first.
-- **One `queryFn`, one key.** Two endpoints sharing a key is the same bug twice, and no linter compares two files.
-- **Mutations.** The plugin does no key analysis on them at all.
-
-### What the factory guarantees, and what it doesn't
-
-`createQueryKeyFactory(entity, (all) => ({ ... }))` hands your callback an `all` function and merges it into the result. Three consequences that decide whether invalidation works:
-
-- **Every entry is a function — call it.** `keys.all()`, `keys.me()`, not `keys.all`. A zero-argument key is still `() => [...]`; passing the function itself into `queryKey` hashes the function, not the key.
-- **Every key spreads `all()` as its first element.** That single shared prefix is the only reason `invalidateQueries({ queryKey: keys.all() })` sweeps the entity. A key built without it is invisible to the sweep and will go stale forever — this is why the callback receives `all` instead of you rebuilding the prefix by hand.
-- **A filtered key needs an unfiltered parent.** Matching is by array prefix, so `[entity, "list", filters]` cannot be invalidated as a group by its own factory method — you would have to pass a filters object and lean on TanStack's partial-object matching, which breaks the day someone adds `exact: true`. Give the factory both:
 
 ```typescript
-export const [entity]Keys = createQueryKeyFactory([ENTITY]_ENTITY, (all) => ({
-  lists: () => [...all(), [ENTITY]_QUERY_KEYS.LIST] as const,
-  list: (filters: I[Entity]Filters) => [...all(), [ENTITY]_QUERY_KEYS.LIST, filters] as const,
-  infinite: (filters: I[Entity]Filters) => [...all(), [ENTITY]_QUERY_KEYS.INFINITE, filters] as const,
-  byId: (id: string) => [...all(), id] as const,
-}))
+queryKey: [entity]Keys.bySlug(slug),
+queryFn: () => [entity]Api.getBySlug(slug),
 ```
-
-`lists()` invalidates every filter combination by prefix; `list(filters)` addresses one; `infinite(filters)` is its own entry so the paginated cache never collides with the plain list, and `lists()` still sweeps it because it shares the same prefix. Same rule for any other parameterized key.
-
-Breadth, narrowest first: `byId(id)` → `list(filters)` → `lists()` → `all()`. Pick the narrowest that covers what changed.
-
-## Reading data
-
-Queries are declared as `queryOptions({ ... })` objects in the entity, and consumed with `useQuery(entityQueries.x(...))`. The component picks the hook; it never re-declares the key or the fetcher.
-
-- **Dependent query → `enabled`**, not an early `return` and not an effect. `enabled: Boolean(userId)` keeps it a disabled query, which is a real state (`isPending` true, no fetch) instead of a conditional hook.
-- **Deriving from the response → `select`**, not a `.filter().sort()` in the component body. `select` re-runs when the data changes *or* when the `select` function's identity changes between renders; an inline closure is a new function every render, so it narrows what re-renders only once it is stable (`useCallback`, or a reference declared outside the component).
-- **A dynamic number of parallel queries → `useQueries`.** A fixed pair is just two `useQuery` calls; a list of ids you don't know at compile time cannot be, because hooks can't run in a loop.
-- **Pagination and filter switches → `placeholderData: keepPreviousData`**, and dim the list on `isPlaceholderData`. Without it every page change flashes the empty state.
-- `initialData` is cached as if it were fetched and ages by `staleTime`; `placeholderData` is never written to the cache. Reach for `placeholderData` unless you genuinely have the complete, authoritative object.
-- **Never mirror query data into `useState`, and never fetch inside `useEffect`.** The cache is the state. An effect that copies `data` into state is the derived-state bug wearing a data-layer costume.
-
-## States
-
-- `isPending` — no data yet (v5 name; `isLoading` is `isPending && isFetching`, and is not what you want for a disabled query).
-- `isFetching` — a request is in flight, including a background refetch over data you already show. Use it for a subtle indicator, never for the main skeleton.
-- `data` is `undefined` while pending — type-narrow on the state, don't `data!` or `data?.x ?? fallback` your way past it.
-- Loading, empty and error are three different renders. A list that returns `null` on an empty array is a bug; empty needs its own copy.
-- `isLoadingError` — the first load failed and there is nothing to show. `isRefetchError` — a background refetch failed and `data` still holds the last good value; render it with an inline alert, never blank it. The v5 types narrow in this order: check `isPending` first (`data` is `undefined`), then `isError` (`error` is set; for `isLoadingError` specifically, `data` is still `undefined`), and only after both are false is `data` narrowed to present.
-- Use `throwOnError` plus an error boundary for "this screen cannot render without it"; handle `isError` inline for a region the page survives without.
-- In suspense mode the default is `throwOnError: (error, query) => query.state.data === undefined` — a refetch failure over cached data does not reach the boundary, the component keeps rendering and the error sits in `error`. A boundary retry needs `QueryErrorResetBoundary` with `onReset={reset}`, or it re-renders the same cached error; the shape is in the `react` skill, references/code-splitting.md.
-- **`refetch()` is not invalidation.** It re-runs only the observer that called it and ignores every other observer of that key and every other key a mutation would normally sweep; reach for it only for a user-visible "retry this" action, never as a substitute for `invalidateQueries`.
-
-## Mutations
-
-- **Invalidate in `onSuccess`, as narrowly as the change allows.** Editing one item invalidates that item's key plus the lists that contain it; it does not sweep the entity. Sweep with `keys.all()` on create and delete, where you can't know which lists changed. Which layer the mutation lives in and which layer's keys it may invalidate: the structure skill loaded in this project.
-- `setQueryData` instead of an invalidation **only when the server returned the full updated object**. Writing a partial or client-guessed shape into the cache is how a screen starts showing a field the API never sent.
-- **Optimistic updates are for cheap, reversible, high-frequency actions** — a toggle, a reorder, a like. Not for a create with server-generated fields, and not for anything the user must trust as committed. One application of the optimistic value, in `onMutate`; `onSettled` invalidates to reconcile, and `onSuccess` only overwrites the cache when the server sent the complete object. The full `onMutate`/`onError`/`onSettled` shape, including cancelling in-flight refetches and the rollback context, is in [references/mutation-recipes.md](references/mutation-recipes.md).
-- **Concurrent mutations on the same key race the rollback.** A second optimistic update's `onError` must restore the cache to what it held just before *that* mutation, not to a snapshot taken before the first — see references/mutation-recipes.md for the guard.
-- Cache work, navigation, toasts and storage writes go in `onSuccess`/`onError` on the hook — not in the component's submit handler, and never in an effect watching `isSuccess`. A follow-up specific to one call site goes in `mutate`'s per-call callbacks; `mutateAsync` only where a later step awaits the result (references/mutation-recipes.md).
-- Spreading shared options and adding a callback replaces, not extends: `...options, onError` must call `options.onError?.(...args)` first, or the rollback the options carried is gone. The call must be awaited or returned, not fired and left dangling, so an invalidation the shared callback starts still completes before the caller continues.
-- Disable the submit control on `isPending`. Don't swap the label for the word "Loading".
-
-## Prefetching
-
-Prefetch on intent — `onMouseEnter` and `onFocus` on the trigger — for the one or two navigations the user is visibly about to make. `queryClient.prefetchQuery(entityQueries.byId(id))` reuses the same options object, so the key can't drift from the real query. Pair it with the lazy-route preload from the `react` skill: the chunk and its data should be in flight together. Don't prefetch a whole list on mount — that's just fetching, later.
-
-## Never
-
-- Guess a response shape. It comes from the module's types, which come from the contract.
-- Call `invalidateQueries()` with no argument — that refetches the entire app.
-- Put `queryClient.setQueryData` in a component body or an effect.
-- Add a `useEffect` to run a refetch that `enabled` or a key change already does.
-- Reach for `refetch()` where invalidation is correct. `refetch()` ignores the rest of the cache and every other observer of that key.
-
-## Reviewing
-
-In order of how often it hurts:
-
-- a key missing an input the `queryFn` closes over, found at a hand-written call site the lint rule's bare-reference gap let through
-- query data mirrored into `useState`, or a fetch inside `useEffect`
-- an invalidation broader than the change — a full `keys.all()` sweep on an edit, or narrower than it — a create/delete that only hits `byId`
-- an infinite query and the plain list sharing one key
-- `refetch()` used where an invalidation was meant
-- a disabled query replaced by an early `return` or a conditional hook
-- an optimistic update applied twice (`onMutate` and again on the server response), or a rollback that restores a stale snapshot under concurrent mutations
-- `setQueryData` writing a partial or client-assembled object
-- a local `onError` re-handling what the shared `QueryCache`/`MutationCache` handler already does
-- a shared mutation option overridden without calling the original callback
-- a query missing `signal` on a request that can be superseded
 
 ## References
 
-| Writing | Read |
-|---|---|
-| dependent, parallel, derived, paginated or infinite reads | [references/query-recipes.md](references/query-recipes.md) |
-| optimistic updates, targeted cache writes, cross-component mutation state | [references/mutation-recipes.md](references/mutation-recipes.md) |
-
-Anything neither file covers: fetch current upstream docs via the `context7` MCP server (`/tanstack/query`) rather than guessing — v4 answers are still the top search result and v5 renamed a lot.
+- [references/client-and-keys.md](references/client-and-keys.md): before the first query in a session, or when choosing a key, adding a factory entry, or deciding what the lint rule already checks.
+- [references/query-recipes.md](references/query-recipes.md): when rendering query states, or writing a dependent, derived, parallel, paginated, infinite, cancellable or prefetched read.
+- [references/mutation-recipes.md](references/mutation-recipes.md): when choosing invalidation breadth, writing a response into the cache, an optimistic update, concurrent mutations, mutation state read elsewhere, or the follow-up after a mutation.
+- Anything none of them covers: current upstream docs via the `context7` MCP server (`/tanstack/query`), since v4 answers still top the search results and v5 renamed a lot.
+- [references/reviewing.md](references/reviewing.md): the questions `review` asks; not needed when writing code.

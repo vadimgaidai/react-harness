@@ -14,6 +14,8 @@ The first file a human reads is `SPEC.md`: what the user sees, as rules with ids
 
 Each stage writes a file and the next one reads it in a fresh session. The planning chat adds nothing to the build. A session that reviews code it just wrote approves it.
 
+`verify` and `review` fork their own context: each starts from the files and the diff, with nothing about the build.
+
 Four shapes, decided before anything else: a block goes straight to `block-builder`, a layout gets a light spec, a feature the full one, a change a delta with an unchanged-behaviour section.
 
 ## Two things outrank the plan
@@ -29,7 +31,7 @@ Most of the kit's tokens go to reading, not writing. Every mechanism below repla
 | Script | Plugin | Replaces | What enters the window instead |
 |---|---|---|---|
 | `contract-slice.mjs` | react-feature-workflow, `api-contract` | reading the whole OpenAPI file, tens of thousands of tokens for a mid-sized API | `contract.md`: the endpoints the spec names, every `$ref` inlined, every field marked required or optional |
-| `sibling-outline.sh` | react-feature-workflow, `implement` | reading the module a build mirrors file by file | its folder shape, the barrel verbatim, short files whole, exported signatures of long files at `path:line`, key factories, external imports. The fixture test asserts the outline is under a fifth of the module's line count |
+| `sibling-outline.sh` | react-feature-workflow, `implement` | reading files of the mirrored module that play no role in the build | a map: folder shape, barrel, short files whole, exported signatures of long files at `path:line`, key factories, external imports. The files with the same role as what is being written are then read whole |
 | `scaffold.sh` | both structure plugins | generating directories, barrels and empty model files per module | one shell call per module; generation spends tokens only on the code that differs |
 | `structure-check.sh` | both structure plugins | reading every module to see whether its barrel is complete | one line per defect over the changed files, under `review`'s Checks |
 
@@ -37,13 +39,10 @@ Most of the kit's tokens go to reading, not writing. Every mechanism below repla
 
 | Hook | Plugin | Refuses | Saves |
 |---|---|---|---|
-| `contract-source-guard` | react-feature-workflow | `Read` or a shell command on the OpenAPI file a `contract.md` names as its source | the raw spec, after it was sliced once |
-| `long-read-guard` | react-feature-workflow | `Read` without a `limit` on a source file over 300 lines, or over 1000 under `node_modules` | the body of a long file when a range or a grep would do |
-| `shell-read-guard` | react-feature-workflow | `cat`, `head`, `tail`, `sed`, `awk` on a source file, including inside a loop, a substitution or `xargs` | reads that no `Read` count would show; `grep` and piped `head` on command output pass |
-| `format-on-edit` | react-feature-workflow | nothing; runs Prettier after every write | output tokens on formatting, in every stage |
-| `fsd-validator`, `bucket-placement-validator`, `kebab-case-validator`, `barrel-import-validator`, `model-placement-validator` | structure plugins | a file on the wrong layer or bucket, a wrong filename, a barrel import, a domain type or a schema in a UI file | the review round that would find it, and the rewrite after |
-
-`RFW_GUARDS=off` disables the three read guards for a session. An eval case asks for all three shortcuts outright and expects each refusal; the structure hooks have the same kind of case.
+| `session-skills` | react-feature-workflow | nothing; on `SessionStart` and `SubagentStart` names the convention skills to call by what the work touches | nothing; it is the route from a coding request to the house rules |
+| `loop-guard` | react-feature-workflow | while a `LOOP.md` is `running`: any stage but the next one, a `verify` or `refine` past `max_iterations`, a second `verify` failing on the same criteria, which ends the loop as `stuck`, an edit of `LOOP.md` other than `status: stopped`, and the end of a turn while a stage is left; a code edit after `verify` makes `verify` the next stage | rounds the model would count in its head, and the history `verify` overwrites: a line per stage call in `LOOP.md` |
+| `format-on-edit` | react-feature-workflow | nothing; runs Prettier on the file a Write or Edit touched; shell writes are left to the project's pre-commit hook | output tokens on formatting, in every stage |
+| `structure-validator` | structure plugins, one each | a file on the wrong layer or bucket, a wrong filename, a barrel import, a domain type or a schema in a UI file, and in FSD an import that goes sideways or up | the review round that would find it, and the rewrite after |
 
 ### Subagents
 
@@ -53,11 +52,17 @@ Most of the kit's tokens go to reading, not writing. Every mechanism below repla
 
 `SPEC.md`, `PLAN.md`, `contract.md`, `DESIGN.md`, `VERIFY.md` and `REVIEW.md` are what the next stage reads; the conversation that produced them is not. `implement` starts with two capped files instead of a planning chat, `review` reads the diff file by file instead of a session's worth of edits.
 
-## Hooks guard context and placement, skills carry code rules
+## Skills carry code rules, hooks only route to them
 
 The hooks above and the structure plugins' placement hooks are the only hooks. Code rules live in the convention skills: no comments except `TODO:` and `!`, two parameters, guard clauses, no nested ternaries, collections judged by repeated work, error ownership, type discipline. The model applies them while writing and `review` applies them while reading.
 
 The kit ships no lint config and no scanner. A regex that flags a comment, a third argument or a `useMemo` judges code by its surface. A second ESLint config argues with what the project already decided. The project's own typecheck, lint and tests run under `review`'s Checks.
+
+## The loop is a state machine
+
+`autopilot`'s verify → refine → review loop lives in `loop-guard`, not in the prompt. The next stage is computed from `VERIFY.md`, `REVIEW.md` and `LOOP.md`; any other stage is refused with the one to run. The model does the work inside a stage and never picks the order.
+
+Four exits: `finished` when no stage is left, `stuck` when the same criteria fail two `verify` rounds in a row, `capped` at `max_iterations` (4), `stopped` when the model hands the run to the human. Most of what repair loops gain comes in the first three or four rounds, and a round that changes nothing changes nothing the next time either; sources in `.planning/harness-rework/LOOP-RESEARCH.md`.
 
 ## Verify and review are different questions
 
@@ -70,3 +75,9 @@ Neither edits. `refine` takes both files in, checks each item against the code a
 ## One structure plugin per architecture
 
 `feature-sliced-design` assumes all of `src/` is FSD and blocks any write outside its layers. `feature-folders` assumes nothing about the old tree: placement and naming block new files only, so years of existing structure are left alone, and the one content rule (a domain type, a constant, a schema, a hook or an HTTP call in a UI file) applies to old files and new. They disagree on what `src/` should look like. Install the one that matches.
+
+## How the kit is measured
+
+Structure on every commit: `claude plugin validate --strict` over the marketplace and each plugin, locally and in CI.
+
+Whether the code follows the house rules: the `gen-*` and `review-*` cases under `plugins/react-feature-workflow/evals/`, run by `claude plugin eval` with the plugin and without. A case grades the rule in the written code and whether the convention skill was called.

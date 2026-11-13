@@ -1,26 +1,46 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/session-skills.mjs" }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "^(general-purpose|react-feature-workflow:(block-builder|bug-fixer))$",
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/session-skills.mjs" }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
-        "matcher": "Read",
+        "matcher": "Skill|Write|Edit",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/long-read-guard.mjs" },
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/contract-source-guard.mjs" }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/shell-read-guard.mjs" },
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/contract-source-guard.mjs" }
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/loop-guard.mjs" }
         ]
       }
     ],
     "PostToolUse": [
       {
+        "matcher": "Skill|Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/loop-guard.mjs" }
+        ]
+      },
+      {
         "matcher": "Write|Edit",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/format-on-edit.sh" }
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/format-on-edit.mjs" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/loop-guard.mjs" }
         ]
       }
     ]

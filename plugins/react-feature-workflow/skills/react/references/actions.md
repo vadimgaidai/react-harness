@@ -1,22 +1,35 @@
 # Actions, Transitions and `use`
 
-> Canonical code shape. Replace the placeholders (`[Entity]`, `I[Entity]`) with real names.
+> Which React 19 hook owns a pending flag, an optimistic value or a promise in this stack?
+> Replace the placeholders (`[Entity]`,
+> `I[Entity]`) with real names.
 
 ## `useTransition` — async actions without a manual pending flag
 
 ```tsx
 const [isPending, startTransition] = useTransition()
 
-const handleSubmit = () => {
+const export[Entity]s = () => {
   startTransition(async () => {
-    await submit(payload)
+    await [entity]Api.exportCsv(filters)
   })
 }
 
-return <Button onClick={handleSubmit} disabled={isPending}>{t("actions.save")}</Button>
+return <Button onClick={export[Entity]s} disabled={isPending}>{t("[entity].export")}</Button>
 ```
 
-State updates after the `await` are still inside the transition. `isPending` stays `true` for the whole async body, so a hand-rolled `const [isLoading, setIsLoading] = useState(false)` around a submit is redundant. Errors are not caught for you — `try`/`catch` inside the transition, or let an error boundary take it.
+`isPending` stays `true` for the whole async body, so a hand-rolled `const [isLoading, setIsLoading] = useState(false)` around non-form async work is redundant. A state update after an `await` is no longer part of the transition; wrap it in `startTransition` again:
+
+```tsx
+startTransition(async () => {
+  const file = await [entity]Api.exportCsv(filters)
+  startTransition(() => {
+    setLastExport(file)
+  })
+})
+```
+
+Errors are not caught for you: `try`/`catch` inside the transition, or let an error boundary take it.
 
 Around a navigation, a transition keeps the outgoing screen on-screen instead of flashing a Suspense fallback:
 
@@ -34,7 +47,7 @@ const [optimisticItems, addOptimisticItem] = useOptimistic(
   (current: I[Entity][], pending: I[Entity]) => [...current, pending]
 )
 
-const handleAdd = (draft: I[Entity]) => {
+const add[Entity] = (draft: I[Entity]) => {
   startTransition(async () => {
     addOptimisticItem(draft)
     await create(draft)
@@ -48,18 +61,10 @@ const handleAdd = (draft: I[Entity]) => {
 
 **Choose one layer.** If the value comes from the query cache, do the optimistic update in the mutation's `onMutate` (see the `tanstack-query` skill) and leave `useOptimistic` alone. Using both on the same value produces two competing rollbacks.
 
-## `useActionState` / `<form action>` / `useFormStatus` — not in this stack
+## Form actions
 
-Skip them. This is not a style preference, it is that they occupy a slot React Hook Form already fills:
-
-- **The submit path.** `<form action={formAction}>` and `<form onSubmit={handleSubmit(...)}>` are two handlers for one event. Wire both and whichever React invokes first wins — in practice the action runs, `handleSubmit` never does, and the Zod schema silently never validates. There is no configuration that makes them cooperate.
-- **The pending flag.** `useActionState`'s third return value and `useFormStatus().pending` duplicate `formState.isSubmitting` and the mutation's `isPending`, which the form already has in scope.
-- **The error surface.** The action's returned state duplicates `formState.errors`, which is already driven by the resolver and already rendered through `FieldDescription`.
-- **The server action.** The `action` prop exists to post to one. A client-rendered SPA has none; here it degrades to a callback with extra ceremony and no client validation.
-
-So there is no "small form" exception — a newsletter input or a one-field filter still goes through `useForm` + `zodResolver`, because a second form pattern costs every future reader a decision. See the `react-hook-form-zod` skill for the schema's placement and the shape.
-
-What React 19 *does* add to a form in this stack: `useTransition` for the non-form async work around it (a navigation after success), and `useOptimistic` for a local optimistic value — both above.
+`useActionState`, `<form action>` and `useFormStatus` stay out: a form goes through React Hook
+Form + Zod, and the reason is in the `react-hook-form-zod` skill (`references/form.md`).
 
 ## `use`
 

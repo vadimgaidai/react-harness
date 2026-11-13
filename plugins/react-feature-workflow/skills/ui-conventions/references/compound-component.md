@@ -1,5 +1,7 @@
 # Compound Component Pattern
 
+Answers: a component has two or more related parts; what is the `.Root` contract, when does it need shared state and context, and how do controlled and uncontrolled use work?
+
 > Canonical code shape. Replace the placeholders (`[name]` kebab-case, `[Name]` PascalCase, `I[Name]` type identifiers) with real names, and the `@/components/ui/` import paths with the project's own primitives alias.
 
 When a component has 2+ related nested parts, export an object with `.Root` and named parts.
@@ -10,25 +12,26 @@ action has to reach a part, never to make a component look like the pattern.
 
 ### Composition without shared state
 
+In `[name]/[name].tsx`:
+
 ```tsx
-// [name]/[name].tsx
-import type { ComponentProps, FC } from "react"
+import type { ComponentProps } from "react"
 
 import { cn } from "@/lib/utils"
 
-const [Name]Root: FC<ComponentProps<"section">> = ({ className, ...rest }) => {
+const [Name]Root = ({ className, ...rest }: ComponentProps<"section">) => {
   return <section className={cn("rounded-lg border bg-card text-card-foreground", className)} {...rest} />
 }
 
-const [Name]Header: FC<ComponentProps<"header">> = ({ className, ...rest }) => {
+const [Name]Header = ({ className, ...rest }: ComponentProps<"header">) => {
   return <header className={cn("flex flex-col gap-1 p-6", className)} {...rest} />
 }
 
-const [Name]Content: FC<ComponentProps<"div">> = ({ className, ...rest }) => {
+const [Name]Content = ({ className, ...rest }: ComponentProps<"div">) => {
   return <div className={cn("p-6 pt-0", className)} {...rest} />
 }
 
-const [Name]Footer: FC<ComponentProps<"footer">> = ({ className, ...rest }) => {
+const [Name]Footer = ({ className, ...rest }: ComponentProps<"footer">) => {
   return <footer className={cn("flex items-center p-6 pt-0", className)} {...rest} />
 }
 
@@ -56,14 +59,14 @@ whether its menu is open) even though nothing else reads it.
 
 ### Composition with shared state
 
+In `[name]/[name].tsx`:
+
 ```tsx
-// [name]/[name].tsx
 import {
   createContext,
   useContext,
   useState,
   type ComponentProps,
-  type FC,
   type ReactNode,
 } from "react"
 
@@ -89,7 +92,7 @@ interface I[Name]RootProps {
   onOpenChange?: (open: boolean) => void
 }
 
-const [Name]Root: FC<I[Name]RootProps> = ({ children, open, defaultOpen = false, onOpenChange }) => {
+const [Name]Root = ({ children, open, defaultOpen = false, onOpenChange }: I[Name]RootProps) => {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
   const isControlled = open !== undefined
   const isOpen = isControlled ? open : uncontrolledOpen
@@ -105,7 +108,7 @@ const [Name]Root: FC<I[Name]RootProps> = ({ children, open, defaultOpen = false,
   return <[Name]Context value={{ isOpen, toggle }}>{children}</[Name]Context>
 }
 
-const [Name]Trigger: FC<Omit<ComponentProps<"button">, "aria-expanded">> = ({ onClick, ...rest }) => {
+const [Name]Trigger = ({ onClick, ...rest }: Omit<ComponentProps<"button">, "aria-expanded">) => {
   const { isOpen, toggle } = use[Name]Context()
 
   return (
@@ -124,7 +127,7 @@ const [Name]Trigger: FC<Omit<ComponentProps<"button">, "aria-expanded">> = ({ on
   )
 }
 
-const [Name]Content: FC<Omit<ComponentProps<"div">, "hidden">> = (props) => {
+const [Name]Content = (props: Omit<ComponentProps<"div">, "hidden">) => {
   const { isOpen } = use[Name]Context()
 
   return <div {...props} hidden={!isOpen} />
@@ -183,8 +186,8 @@ Controlled — the parent owns it, and `[Name]` never also writes `uncontrolledO
   without calling the primitive's own handler breaks keyboard use silently.
 - **A new part is added for a scenario that exists** — a `[Name].Footer` is worth adding when
   a real caller needs a footer slot, not to mirror `Header` for symmetry.
-- **Public exports follow the loaded structure skill** — `[Name]` is exported from the
-  module's barrel; a caller never imports `[name]/[name]` directly past it.
+- **Public exports follow the loaded structure skill** — which file exports `[Name]` and how a
+  caller imports it is that skill's decision.
 
 Rules:
 

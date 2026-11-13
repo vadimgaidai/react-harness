@@ -19,7 +19,7 @@ plugin instead — don't install both in the same project.
 src/
 ├── app/          entry point, router, root providers
 ├── pages/        route-level modules — one per route
-├── layouts/       route shells: persistent chrome + the providers it mounts
+├── layouts/      route shells: persistent chrome + the providers it mounts
 ├── features/     a user-facing capability with its own state — not tied to one page
 ├── components/   global, domain-free components; components/ui/ is CLI-managed and flat
 ├── hooks/        global, domain-free hooks
@@ -31,9 +31,11 @@ src/
 ```
 
 Every bucket's name is enforced at write time for **new** files by this
-plugin's `bucket-placement-validator` hook — editing an existing file never
+plugin's bucket-placement check — editing an existing file never
 trips it, so a legacy tree with its own conventions in half of `src/` is left
-alone; only new work is steered into these buckets.
+alone; only new work is steered into these buckets. A file sitting directly in
+`src/` (`main.tsx`, `App.tsx`, `vite-env.d.ts`) is in no bucket and is left
+alone too.
 
 ## Three questions decide everything
 
@@ -65,10 +67,22 @@ you're about to write:
 | a component — which folder, compound vs. wrapper vs. primitive | [references/components.md](references/components.md) |
 | a public barrel | [references/barrels.md](references/barrels.md) |
 
+[references/reviewing.md](references/reviewing.md): the questions `review` asks; not needed when writing code.
+
 ## Naming
 
 Files and folders are `kebab-case`. Pages are `[name]-page.tsx`, layouts are
-`[name]-layout.tsx`. Enforced by the `kebab-case-validator` hook.
+`[name]-layout.tsx`. Enforced by the kebab-case check.
+
+## Where rendered output lives
+
+Rendered output lives under four folder names and nowhere else: `ui/`, `components/`,
+`pages/` and `layouts/` — at the top level (`src/components/`, `src/pages/`,
+`src/layouts/`) and inside a module alike (`features/[name]/components/`,
+`components/ui/` for primitives). The content rules are enforced exactly there: a `.tsx`
+under one of those four may not define a domain type, an as-const constant, a zod schema,
+a hook or an HTTP call. A `.tsx` anywhere else is outside the standard — the content rules
+cannot see it, so it is a placement question for `review` rather than a refused write.
 
 ## Scaffolding
 
@@ -84,22 +98,3 @@ script validates kebab-case and refuses to touch an existing module — if it
 refuses, the module exists: extend it instead. The single-file global buckets
 (`components/`, `hooks/`, `providers/`, `lib/`, `config/`, `assets/`) aren't
 scaffolded — there's no skeleton, just one file, added with Write.
-
-## Reviewing
-
-**Hook-enforced — never re-report:** top-level bucket of a new file; filename
-case; barrel import from `components/ui`; a domain type, an as-const
-constant, a zod schema, a hook, or an HTTP call defined in a UI file; a
-feature or page with its own `api/` folder.
-
-**Script-checkable (`review` runs `structure-check.sh <changed files>`):** a
-module missing its barrel; a barrel re-exporting a file that does not exist;
-a `use-*.ts` outside `hooks/`.
-
-**Judgement — the rubric:**
-- local vs global: a component or hook promoted to a global bucket while it
-  reads a feature's types or copy ([references/placement.md](references/placement.md)
-  row test) — quote the row
-- a page holding business logic or fetching directly
-- a module whose anatomy differs from the layer's skeleton without a stated
-  reason

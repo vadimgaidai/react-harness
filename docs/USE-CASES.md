@@ -2,7 +2,17 @@
 
 What you type, what lands on disk, where the kit stops. Commands come from `react-feature-workflow`; the last one needs a structure plugin.
 
-## A feature with an API
+## A review with no spec
+
+```
+/react-feature-workflow:review
+```
+
+On a branch somebody wrote by hand or in a plain chat. The scope is everything since the merge-base plus staged, unstaged and untracked work, or the range or paths you name. Each finding cites its rule: a line of `CLAUDE.md`, a `.claude/rules/` file, a section of a convention skill. Your typecheck, lint and tests run under Checks.
+
+Where it stops: it writes no file without a `.planning/<name>/` folder and never edits code. Whether the change does what was asked is `verify`'s question and needs a spec.
+
+## A feature with an API, stage by stage
 
 Comments on articles: a backend contract, a list, a form, three UI states nobody wrote down.
 
@@ -54,6 +64,16 @@ Where it stops: a field not in `contract.md` does not go into the types, however
 ```
 
 The spec is a delta: added, modified, removed, plus `## Unchanged behaviour` listing what must keep working (oldest first, the empty state, no form for a signed-out reader). `verify` later checks that no hunk touches what that section protects.
+
+## A small change in one command
+
+```
+/react-feature-workflow:autopilot show the token symbol next to amounts in the activity list
+```
+
+At most two questions, then a short `SPEC.md` and `PLAN.md` in the same formats as the full cycle, then `implement`, then `verify` and `review`, each in a subagent that starts from the files. A failed criterion goes to `refine` and back to `verify`, two rounds at most. The last message lists the criteria by verdict and the review's counts; `refine` applies the review findings when you ask.
+
+Where it stops: more than five criteria, a new screen or module, a Figma design or a new dependency send it to `spec`; a gap in coverage or an open question that changes the build stops the run with the item named.
 
 ## A landing page from Figma
 

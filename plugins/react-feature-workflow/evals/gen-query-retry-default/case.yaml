@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: gen-query-retry-default
+description: 'tanstack-query: do not restate a client default per query; the key comes from the factory. Drawn from: DAPE_FE activity-transaction-detail REVIEW: queries.ts:21 — removed the `retry: false` override'
+expected_outcome: |
+  A by-hash query built from the key factory, with no per-query retry: the shared client already gives up on 4xx.
+context:
+  scaffold_script: scaffold.sh

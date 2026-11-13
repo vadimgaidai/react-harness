@@ -1,6 +1,13 @@
 # Code splitting, Suspense and error boundaries
 
-> Canonical code shape. Replace the placeholders (`[entity]`, `[Entity]`) with real names.
+> What gets loaded lazily, where do Suspense and error boundaries go, and how does a retry
+> actually retry? Replace the placeholders (`[entity]`, `[Entity]`) with real names.
+
+## What to split
+
+Lazy: routes, the content of modals, drawers and popovers, heavy third-party widgets, anything
+behind a tab, a wizard step or a permission check. Eager: anything above the fold, and any
+component smaller than the request that would fetch it.
 
 ## Lazy route
 
@@ -65,12 +72,16 @@ component that renders it, never a top-level import of the page.
 ## Boundary placement
 
 ```tsx
-<Suspense fallback={<HeaderSkeleton />}>
-  <[Entity]Header id={id} />
-</Suspense>
-<Suspense fallback={<CommentsSkeleton />}>
-  <[Entity]Comments id={id} />
-</Suspense>
+<ErrorBoundary FallbackComponent={RegionError}>
+  <Suspense fallback={<HeaderSkeleton />}>
+    <[Entity]Header id={id} />
+  </Suspense>
+</ErrorBoundary>
+<ErrorBoundary FallbackComponent={RegionError}>
+  <Suspense fallback={<CommentsSkeleton />}>
+    <[Entity]Comments id={id} />
+  </Suspense>
+</ErrorBoundary>
 ```
 
 Each region that loads on its own gets its own boundary, so a slow comments query does not
@@ -85,6 +96,7 @@ const open = (id: string) => startTransition(() => navigate(paths.[entity].detai
 ```
 
 The current screen stays visible, dimmed on `isPending`, instead of flashing the fallback.
+Preload the next route's chunk on hover or focus, the same way the dialog above does.
 
 ## Error boundary with a real retry
 
@@ -97,13 +109,12 @@ A query that throws and a chunk that fails to load need two different retries â€
 same cached error, so the next render's `useQuery` call actually retries the fetch:
 
 ```tsx
-const RouteError = ({ error, resetErrorBoundary }: FallbackProps) => {
+const RouteError = ({ resetErrorBoundary }: FallbackProps) => {
   const { t } = useTranslation()
 
   return (
     <ErrorState
       title={t("errors.title")}
-      description={error.message}
       action={<Button onClick={resetErrorBoundary}>{t("actions.retry")}</Button>}
     />
   )
@@ -121,6 +132,34 @@ const RouteError = ({ error, resetErrorBoundary }: FallbackProps) => {
 Without `onReset={reset}`, `resetErrorBoundary` alone re-renders with the same query state,
 which still holds the cached error, and the boundary throws again immediately.
 
+### `QueryBoundary` â€” one component for every query-backed region
+
+Every region that reads with `useSuspenseQuery` needs the same three wrappers, so they are one
+domain-free component the structure skill places with the global components:
+
+```tsx
+interface IQueryBoundaryProps {
+  fallback: ReactNode
+  errorFallback: ComponentType<FallbackProps>
+  children: ReactNode
+}
+
+export const QueryBoundary = ({ fallback, errorFallback, children }: IQueryBoundaryProps) => (
+  <QueryErrorResetBoundary>
+    {({ reset }) => (
+      <ErrorBoundary FallbackComponent={errorFallback} onReset={reset}>
+        <Suspense fallback={fallback}>{children}</Suspense>
+      </ErrorBoundary>
+    )}
+  </QueryErrorResetBoundary>
+)
+```
+
+The region passes its own skeleton and its own error fallback, so each failure says what
+failed and retries only that region. `ErrorBoundary` and `FallbackProps` come from
+`react-error-boundary`; a project without it gets the package named in the plan, never added
+mid-implementation.
+
 ### A chunk failed to load (`lazy()`)
 
 A chunk fetch fails after every deploy on a stale hashed filename; without a boundary the app
@@ -130,7 +169,7 @@ re-imports. The retry needs a fresh promise: a new `lazy()` reference, or a full
 the route.
 
 ```tsx
-const RouteError = ({ resetErrorBoundary }: FallbackProps) => {
+const ChunkError = () => {
   const { t } = useTranslation()
 
   return (
@@ -143,7 +182,7 @@ const RouteError = ({ resetErrorBoundary }: FallbackProps) => {
   )
 }
 
-<ErrorBoundary FallbackComponent={RouteError} resetKeys={[location.pathname]}>
+<ErrorBoundary FallbackComponent={ChunkError} resetKeys={[location.pathname]}>
   <Suspense fallback={<[Entity]PageSkeleton />}>
     <[Entity]Page />
   </Suspense>

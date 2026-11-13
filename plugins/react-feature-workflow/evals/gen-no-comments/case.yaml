@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: gen-no-comments
+description: 'code-shape: no comments except TODO: and !; a literal with a domain meaning is named. Drawn from: DAPE_FE chart-interval-morph REVIEW: chart.tsx:411-414 and blur-swap-text.tsx:45-46 — explanatory comments'
+expected_outcome: |
+  The hook debounces with a named delay constant, no explanatory comments and no one-line returns.
+context:
+  scaffold_script: scaffold.sh

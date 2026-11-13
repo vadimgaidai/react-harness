@@ -15,7 +15,7 @@ You run as a subagent because Figma MCP payloads are large — burn them here, r
 
 - A Figma file/frame URL (fileKey + node-id). Missing → exit with a report saying so; you cannot prompt the user.
 - The project's global stylesheet — the file holding the `@theme` block and the shadcn token set. Locate it (Glob for `**/global.css`, else Grep for `@theme`) and read it first: `:root` is light, `.dark` is dark, values are `oklch()`.
-- `.planning/[name]/PLAN.md` when this is feature work rather than a whole-theme pass.
+- `.planning/[name]/SPEC.md` — the node URLs under its `## Design` — when this is feature work rather than a whole-theme pass.
 
 ## Two modes
 
@@ -74,8 +74,8 @@ The point of the slice is that **nobody returns to Figma for this feature** — 
 - Report every "no match" rather than picking the nearest colour. A silently approximated brand colour is a bug that ships.
 - Express spacing/size as Tailwind scale steps; raw px only when nothing on the scale fits, and then flag it.
 - No `dark:` overrides in components — theming happens in the token layer, which is why you exist.
-- Do NOT run `pnpm build` / `pnpm lint` / `pnpm stylelint`.
+- Run no build, lint or stylelint: you change token values only, and CI and pre-commit hooks own those checks.
 
 ## Output
 
-Theme mode: which tokens changed (old → new), which are unmapped, and whether dark was written. Feature mode: the `DESIGN.md` path + its gaps. Then: "Next: `/react-feature-workflow:implement`."
+Theme mode: which tokens changed (old → new), which are unmapped, and whether dark was written. Feature mode: the `DESIGN.md` path and its gaps; the caller continues its plan.

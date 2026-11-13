@@ -1,113 +1,61 @@
 ---
 name: react
-description: React 19 and React Compiler rules — where state belongs, when memoization is warranted, what effects are actually for, refs and context, error boundaries, and how to split code with lazy + Suspense. Use when writing or reviewing React components, adding a route/modal/heavy widget, chasing a re-render problem, or reaching for useEffect/useMemo/useCallback/useRef/useContext.
+description: React 19 with the React Compiler — where state lives, what an effect is for, when useMemo or useCallback stays, refs, context, keys, lazy + Suspense, error boundaries, useTransition, useDeferredValue, useOptimistic, use, useEffectEvent, Activity and ViewTransition. Use when writing or reviewing a component or hook in a .tsx file, when the task names useState, useEffect, useMemo, useCallback, useRef, useContext, a re-render, memo, key, forwardRef, lazy, Suspense, an error boundary, a tab that keeps its state or an animation, or when adding a route, modal or heavy widget.
 ---
 
 # React 19
 
-Code shapes, before and after: [references/effects.md](references/effects.md),
-[references/state-and-rendering.md](references/state-and-rendering.md),
-[references/code-splitting.md](references/code-splitting.md),
-[references/actions.md](references/actions.md), [references/lifecycle.md](references/lifecycle.md).
+For React 19 with the Compiler; check `package.json` once per session, since React 18 still needs `forwardRef` and `Context.Provider`, `useEffectEvent` and `<Activity>` need 19.2, and `<ViewTransition>` and Fragment refs need 19.3 (table in [references/state-and-rendering.md](references/state-and-rendering.md)).
 
-## Where state belongs
+- State sits in the lowest subtree that reads it; lift only to the closest common ancestor.
+- Server data lives in the query cache, URL state in the query string, anything computable in render.
+- State that changes together is one state; flags that can both be true are a union (`typescript` skill).
+- A value nothing renders (an id, a timer handle) is a ref; `ref.current` is never touched during render.
+- Render is pure: no mutation, toast, navigation, storage or global write, and no `Date.now()`, `Math.random()` or `new Date()`, since render runs again and must give the same output; props, state and query data are copied, never changed in place.
+- An effect only syncs with something outside React; a derived value is computed in render, an event's side effect runs in its handler, fetching belongs to the query cache.
+- A function an effect calls that must see the latest props without re-running the effect is a `useEffectEvent` (19.2), never a ref holding the latest value or a dependency left out; it is not a way to silence the linter.
+- `key` resets a draft copied from a prop on purpose; it does not excuse a prop synced by mistake.
+- An effect that subscribes, opens or schedules returns a cleanup; a `hasRun` flag guards firing, not releasing.
+- An async result whose input has since changed is stale: compare it with the current input, or let the query key do it.
+- `useMemo`/`useCallback` stays only for expensive work on stable inputs or a reference something depends on.
+- A scan over a second collection per rendered item becomes a lookup built once (`code-shape` skill).
+- Keys are identities, never an index on a list that reorders, filters or grows, since an index key hands one row's state to another; no component defined inside another's render, since it remounts on every render of the parent.
+- A condition in JSX is a boolean (`items.length > 0 && …`), since `0 && …` renders `0`.
+- A fast input that drives an expensive render hands the slow part a `useDeferredValue`, so typing stays responsive.
+- A tab or panel that keeps its state while hidden goes in `<Activity mode>` (19.2) instead of a condition that unmounts it; a hidden activity also unmounts its effects.
+- Static JSX and objects are hoisted, so they keep one reference across renders; `useState(() => expensive())` for real setup; functional `setState` when the next value reads the previous.
+- Context holds ambient, rarely changing values; split churning from stable, and try `children` composition first.
+- React 19: `ref` is a plain prop, `<Context value>` is the provider, `use(Context)` may be conditional, no blanket `memo`.
+- Lazy-load routes, modal and drawer content, heavy widgets, anything behind a tab, step or permission; never above the fold.
+- One `<Suspense>` per route and per region that loads on its own, each with an error boundary beside it; a query-backed region uses the one `QueryBoundary` ([references/code-splitting.md](references/code-splitting.md)).
+- `useTransition` owns the pending flag for non-form async work; `useOptimistic` only for a value the query cache does not own.
+- A form goes through `react-hook-form-zod`, never `useActionState`, `<form action>` or `useFormStatus`, not even for one field; the reason is in that skill.
+- `use(promise)` takes a promise created outside render, since one created in render is new every time and suspends forever; it is not a fetching hook.
 
-Most re-render problems are placement problems; memoization fixes none of them.
+## Example
 
-- Push state down to the subtree that reads it; lift only to the closest common ancestor.
-- Server data lives in the query cache, URL state in the query string, anything computable
-  from props or state in render.
-- Group state that always changes together; split state that changes independently. Two
-  flags that can both be true (`isLoading` and `isError` together) are a union of states, not
-  two booleans — `typescript` skill, discriminated unions.
-- A value that never triggers a render — an id, a timer handle, the previous value — is a ref.
-- **Render stays pure.** No mutation, toast, navigation or storage write while rendering —
-  each belongs in a handler or an effect. Props, state and query data are read-only: no
-  `sort`/`reverse`/`splice`/property assignment on them; a sorted or filtered view is a new
-  array ([references/lifecycle.md](references/lifecycle.md) §Immutability).
+A prop copied into state and synced by an effect renders twice per change and shows a stale frame between them:
 
-## Effects
+```tsx
+const [label, setLabel] = useState(formatLabel(value))
+useEffect(() => {
+  setLabel(formatLabel(value))
+}, [value])
+```
 
-An effect synchronizes with something outside React. That is the whole list.
+The value is computed in render:
 
-- Derived state is computed in render; an event's side effect lives in its handler; fetching
-  belongs to the query cache.
-- `key` resets state on identity change before an effect does — for a draft copied from a
-  prop on purpose, not a workaround for one synced by mistake (references/lifecycle.md).
-- Every effect that subscribes, opens or schedules returns a cleanup, and a second setup
-  after cleanup creates nothing extra; a `hasRun` flag guards firing, not releasing.
-- A response arriving after the input it answered has changed is stale: compare it against
-  the current input before using it, or let the query cache's key change do that for you.
+```tsx
+const label = formatLabel(value)
+```
 
-## Memoization and rendering
+A draft the user edits before saving is the exception: it is seeded once and reset with `key` ([references/lifecycle.md](references/lifecycle.md)). A previous value that is rendered is state adjusted during render ([references/effects.md](references/effects.md)).
 
-The Compiler removes the reflex, not the responsibility. A `useMemo`/`useCallback` buys an
-expensive computation or a reference something depends on for stability; neither, remove it.
+## References
 
-- Memoize when the work is expensive **and** the inputs are stable; churning deps are a dead
-  cache. Fix the algorithm before caching its result.
-- A `find`/`filter` over a second collection repeated per rendered item is a lookup built
-  once (`code-shape` §Collections; a loop by itself is not the problem). No `key={index}` on
-  a list that reorders, filters or grows; a replaced search keeps order, duplicates and
-  missing values.
-- Hoist static JSX and objects; never define a component inside another's render — a
-  component type that changes identity between renders remounts its subtree, the same loss
-  of state as a `key` that changes for the wrong reason.
-- `useState(() => expensive())` for real work; functional `setState` when the next value
-  depends on the previous.
-
-## Refs and context
-
-- A ref survives re-renders without causing them. Never read or write `ref.current` during
-  render. `ref` is a plain prop; a ref callback may return a cleanup.
-- Context is for ambient, rarely-changing values — theme, locale, session, a `FormProvider`.
-  Every consumer re-renders on change, so split a churning value from a stable one, and try
-  `children` composition before adding one.
-- `<ThemeContext value={theme}>` is the provider; `use(Context)` may be called conditionally.
-
-## Code splitting and boundaries
-
-- Lazy: routes, the *content* of modals, drawers and popovers, heavy third-party widgets,
-  anything behind a tab, wizard step or permission check. Never: above the fold, or a
-  component smaller than the request.
-- One `<Suspense>` per route plus one per independently-loading region, with a fallback the
-  shape of the content. Preload on hover/focus; `useTransition` around a route swap.
-- Every Suspense boundary has an error boundary beside it; a query's retry and a failed
-  chunk's retry are different mechanisms — references/code-splitting.md.
-
-## Actions, transitions and `use`
-
-- `useTransition` owns the pending flag for non-form async work; `useOptimistic` for a local
-  optimistic value — cache-owned values use the mutation's `onMutate` instead.
-- `useActionState`, `<form action>` and `useFormStatus` have no place beside React Hook Form
-  + Zod, not even for one field — [references/actions.md](references/actions.md) says what breaks.
-- `use(promise)` needs a promise created outside render; `use` is not a fetching hook.
-
-## React 19 specifics
-
-No `forwardRef`; `<title>`, `<meta>` and `<link>` hoist to `<head>`; no blanket `memo`; `ref`
-is a plain prop; `<Context value>` instead of `<Context.Provider value>`. These are React 19's
-API — check `package.json` once in the session before applying one; an 18 project still needs
-`forwardRef` and `Context.Provider`.
-
-## Reviewing
-
-In order of how often it hurts:
-
-- a redundant effect — any shape in [references/effects.md](references/effects.md)
-- state above the only subtree that reads it, or duplicating cached server data
-- a mutation, toast, navigation or storage write during render
-- props, state or query data mutated in place instead of copied
-- a scan over a second collection repeated per rendered item
-- a memo whose deps churn, or a `useMemo`/`useCallback` that buys neither a real computation
-  nor a stable reference anything depends on
-- an index key on a dynamic list, a component defined inside another's render, or a `key`
-  that changes for the wrong reason — each resets state the user did not ask to lose
-- a subscription, timer or listener with no cleanup, or a `hasRun` flag standing in for one
-- a stale async result (a late search or save) rendered over a screen that has since changed
-- two state flags that can both be true where a union of states was meant
-- a context whose value churns every render
-- a route, modal or heavy widget imported eagerly
-- a Suspense boundary with no error boundary beside it, or a retry that re-throws the same
-  cached error/rejection instead of actually resetting
-- a ref read during render
+- [references/effects.md](references/effects.md): before writing or keeping a `useEffect`, and for `useEffectEvent`.
+- [references/lifecycle.md](references/lifecycle.md): a draft seeded from a prop, a stale async result, a cleanup, render purity, a union of states.
+- [references/state-and-rendering.md](references/state-and-rendering.md): placing state, keeping or dropping a memo, keys, refs, context, a numeric JSX condition, `useDeferredValue`, `<Activity>`, APIs the Compiler skips, the version table, `<ViewTransition>`, a Fragment ref.
+- [references/code-splitting.md](references/code-splitting.md): a route, modal or heavy widget; Suspense and error boundaries; a retry.
+- [references/actions.md](references/actions.md): `useTransition`, `useOptimistic` and `use`.
+- [references/reviewing.md](references/reviewing.md): the questions `review` asks; not needed when writing code.

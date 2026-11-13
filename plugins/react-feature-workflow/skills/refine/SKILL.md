@@ -7,6 +7,8 @@ description: Applies requested changes to a just-implemented unit of work — th
 
 You change what `/implement` built, steered by what the user saw. Main session, no fan-out, the same conventions and the same authorities as `implement` — refining is not freeform chat that forgets the plan exists.
 
+You are done when every user remark and every open `- [ ]` box in `VERIFY.md` and `REVIEW.md` is applied, refuted or declined with its one line; each of those files has frontmatter `status: done` (every box ticked) or `status: partial` (any left open, with the reason); the project's typecheck passes; and the Output below is written.
+
 ## Inputs
 
 - `.planning/[name]/SPEC.md` when it exists — authoritative for behaviour and acceptance criteria. A remark that changes what the product does changes this file first.
@@ -15,22 +17,56 @@ You change what `/implement` built, steered by what the user saw. Main session, 
 - `.planning/[name]/DESIGN.md` when it exists — authoritative for tokens, spacing, layout and measurements. Screenshots are read with `Read`; never call Figma MCP for anything it answers.
 
 - `.planning/[name]/VERIFY.md` when it exists — `verify`'s failed criteria as `- [ ]` items, each with the criterion, the evidence and what is missing. Taken in the same way as a review item, and first: a criterion the spec states is not a judgement call.
-- `.planning/[name]/REVIEW.md` when it exists — `review`'s CONFIRMED findings as `- [ ]` items, each in three parts (what, why not here, fix), and its PLAUSIBLE ones under `## Open questions`. The first are taken in as below, never applied blind; the second are questions to settle with the user or the code, never tasks.
+- `.planning/[name]/REVIEW.md` when it exists — `review`'s findings as `- [ ]` items, style violations first, then engineering remarks. Each has four parts: `file:line` → problem → the rule, cited by skill and section, with the concrete consequence for an engineering remark → proposed change, sometimes with a fenced code block. Open questions sit under `## Open questions` as plain bullets, each with what would settle it. Findings are taken in as below, never applied blind and never pasted from the code block unchecked; open questions are settled with the user or the code, never tasks.
 
 No `.planning/` folder for this work? Take the change as a direct brief against the project's conventions — and say the spec and plan are missing.
+
+## Conventions before the first edit
+
+Call the convention skills for what the change touches, through the `Skill` tool, before the first Write or Edit — the same route as `implement`; a skill already called in this session is not called again:
+
+- Every `.ts` or `.tsx` file: `code-shape`, `typescript`.
+- Every component or hook: `react`, `ui-conventions`, `error-handling`.
+- A query, a mutation or the cache: `tanstack-query`.
+- A form or a validation schema: `react-hook-form-zod`.
+- A route, a loader or search params: `routing`.
+- A test file: `react-testing`.
 
 ## 0 — Taking in VERIFY.md and REVIEW.md
 
 A verify item names a criterion the change does not meet; a review item is a claim about the
 code. Both are worked the same way, verify first. For each open box, in order:
 
-1. **Read the whole item** before touching anything — the three parts are one argument.
-2. **Verify it against the code as it is now.** Open the `file:line`; confirm the complication is there and the "why not here" still holds (the helper it names exists, the second caller it says is missing is missing, the contract line it cites says that). An item the code refutes is marked `[x] refuted — <the line that proves it>` and left alone.
+1. **Read the whole item** before touching anything — a review item's four parts (`file:line`, problem, rule, proposed change) are one argument, and so are a verify item's criterion, evidence and what is missing.
+2. **Verify it against the code as it is now.** Open the `file:line`; confirm the problem is there and the cited rule applies to the line as written (the helper it names exists, the second caller it says is missing is missing, the contract line or skill section it cites says that). An item the code refutes is marked `[x] refuted — <the line that proves it>` and left alone.
 3. **Apply the fix**, one item at a time, the smallest change that keeps the behaviour; run the typecheck after each. Tick the box with one line naming what changed.
-4. **Push back with evidence, not comfort.** An item that would break behaviour, remove a designed state or contradict `PLAN.md` / `contract.md` is not applied: mark it `[x] declined — <reason, with the file:line or plan line>`. No "good catch", no "you're right" — the diff is the acknowledgement.
+4. **Push back with evidence.** An item that would break behaviour, remove a designed state or contradict `PLAN.md` / `contract.md` is not applied: mark it `[x] declined — <reason, with the file:line or plan line>`. The diff and the tick line are the whole acknowledgement.
 5. **Unclear item → stop and ask** before applying any of the others; items can depend on each other, and half an understanding is a wrong edit.
 
-Blocking items (a failed criterion, a red check, a contract violation) first, then simple ones, then the ones that restructure. An open question is answered — by a line of code you can quote, or by asking — and recorded under it; it is never turned into an edit on its own. Set the frontmatter `status` to `done` when every box is ticked, `partial` when any is left open with a reason.
+Blocking items (a failed criterion, a red check, a contract violation) first, then simple ones, then the ones that restructure. An open question is answered — by a line of code you can quote, or by asking — and recorded under it; it is never turned into an edit on its own. Then set the frontmatter `status` of each file as the done criterion above says.
+
+Three calls that are easy to get wrong. A tick keeps the item's line and adds what happened to it on that same line.
+
+Fixed — the tick names what changed, with `file:line`.
+
+```
+no   - [x] AC-3 — fail — static — nothing handles 409; R-5 requires a conflict message — fixed
+yes  - [x] AC-3 — fail — static — nothing handles 409; R-5 requires a conflict message — fixed: src/features/comments/ui/comment-form.tsx:52 shows t("comments.conflict") on a 409
+```
+
+Refuted — the proof is a line of code, not an opinion about the finding.
+
+```
+no   - [x] refuted — the hook is needed
+yes  - [x] refuted — src/features/comments/model/use-comment-draft.ts:9 is read by comment-form.tsx:14 and reply-form.tsx:11, so it is not a one-caller wrapper
+```
+
+Declined — the reason cites the plan, spec or contract line it would break.
+
+```
+no   - [x] declined — not needed
+yes  - [x] declined — PLAN.md Decisions "the comment list owns its empty state"; removing comment-list.tsx:71 drops the designed empty state for AC-5
+```
 
 ## 1 — Classify each remark (the user's)
 
@@ -46,7 +82,7 @@ A message that mixes kinds gets split: do the refinements, list what you routed 
 
 ## Rules
 
-`implement`'s rules apply unchanged — conventions loading order, a structure skill wins placement (sibling shape is the fallback), no dependency the plan does not name, tokens over raw values, `.d.ts` over prose. Two additions:
+`implement`'s rules apply unchanged — the convention route above, a structure skill wins placement (sibling shape is the fallback), no dependency the plan does not name, tokens over raw values, `.d.ts` over prose. Two additions:
 
 - The smallest change that satisfies the remark. A refinement that rewrites a working module is a rewrite, not a refinement.
 - Every `SPEC.md` and `PLAN.md` edit is announced as old → new, never silent — both are shared state between the commands.

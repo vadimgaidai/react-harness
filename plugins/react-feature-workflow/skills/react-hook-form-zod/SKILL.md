@@ -1,61 +1,56 @@
 ---
 name: react-hook-form-zod
-description: Repo-specific React Hook Form + Zod patterns — zodResolver, Field/FieldGroup layout, z.input === z.output rule. Use when building or fixing forms, validation schemas, resolver type errors, or multi-step/field-array forms.
+description: Forms with React Hook Form and Zod — useForm with zodResolver, the schema file and its z.infer type, z.input matching z.output, Field/FieldGroup/FieldError layout, Controller with data-invalid and aria-invalid, Zod 4 formats, useFieldArray, submit and isSubmitting, an edit form's values across a refetch, setError. Use when writing or fixing a form, a validation schema, a field array, a multi-step form, a submit handler, or a resolver type error.
 ---
 
-# React Hook Form + Zod — repo quick reference
+# React Hook Form + Zod
 
-How forms are built **in my projects**. Canonical schema shape: [references/schemas.md](references/schemas.md). The full edit-form lifecycle — initial values from a query, a background refetch mid-edit, dirty fields, submit state: [references/lifecycle.md](references/lifecycle.md). Placement and naming — where the schema file and the form component live, one form per file — is the structure skill loaded in this project. Zod 3 and 4 differ in small ways (`z.coerce`'s inferred input type, `.default()` placement, the resolver package's generics); check `package.json` once in the session before applying a version-bound rule here. For anything this file does not cover, fetch the current upstream docs via the `context7` MCP server (`/react-hook-form/react-hook-form`, `/colinhacks/zod`) rather than guessing.
+- The schema lives in its own file, never inline in a component or an API file, so the form, the mutation and the tests import one schema and its `z.infer` type; placement is the structure skill loaded in this project.
+- The form type is `z.infer<typeof schema>`, exported next to the schema, never a hand-written interface that can drift from it.
+- A form schema keeps `z.input` equal to `z.output`: no `.transform`, `.preprocess` or `z.coerce`, because `zodResolver` types the form by the output while `defaultValues` and the fields work on the input; conversion happens in `onSubmit`.
+- A schema message is a translation key, and every label and message renders through `t("key")`.
+- Zod 4 is written in its own forms (`z.email("key")`, `z.url()`, the `error` parameter); check `package.json` once, since Zod 3 uses the chained ones ([references/schemas.md](references/schemas.md) has the table).
+- No schema pattern without a precedent in [references/schemas.md](references/schemas.md) or in the repo.
+- `useForm` takes `zodResolver(schema)` and `defaultValues` for every field, so no field starts `undefined` and switches from uncontrolled to controlled.
+- The resolver is the only validation; no manual `onChange` checks.
+- Every field goes through `Controller`, as shadcn's form docs do, so every control has one shape and `fieldState` at hand: `{...field}` on the control, `fieldState.invalid` as `data-invalid` on `Field` and `aria-invalid` on the control.
+- Layout is `FieldGroup`, `Field`, `FieldLabel`, `FieldDescription` for help text and `FieldError` for the error (`{fieldState.error?.message && <FieldError>{t(fieldState.error.message)}</FieldError>}`), array rows included; never raw `div`s, never the legacy `Form`/`FormField`/`FormItem`, which shadcn's current form docs replace with `Field` and `Controller`. Visual layout beyond `Field` is `ui-conventions`.
+- A field array goes through `useFieldArray` and is keyed by `field.id`, never the index.
+- The submit target is a mutation hook from the module's mutations file, and `handleSubmit`'s callback awaits or returns its promise, since `isSubmitting` lasts exactly as long as that promise.
+- The submit button keeps its label, takes `disabled={isSubmitting || mutation.isPending}` and shows a `Spinner` with `data-icon="inline-start"`.
+- No `<form action>`, `useActionState` or `useFormStatus` on an RHF form, one-field forms included: the action wins the submit event and the resolver never runs.
+- An edit form takes its values from the query through `values` with `resetOptions: { keepDirtyValues: true }`, never a `reset` effect; a different entity resets through `key`.
+- `""`, a missing key, `null` and `0` are four values; "not set" is sent as `null` or an omitted key, never `""`.
+- A server error the response ties to a field goes to `setError` on that field, anything else to `root.serverError`, each with a message key; the form that shows it is its one owner, so no toast beside it (`error-handling`).
+- A value one part of the UI re-renders on is read with `useWatch`, not `form.watch()`, since `watch()` re-renders the whole form on every change and its value goes stale under the React Compiler.
+- A multi-step form is step components sharing one form through `FormProvider`.
 
-## The form recipe
+## Example
 
-```tsx
-const form = useForm<TFooFormValues>({
-  resolver: zodResolver(fooSchema),
-  defaultValues: { email: "", password: "" }, // ALWAYS provide — avoids uncontrolled→controlled warnings
+A number field. `z.coerce` makes the input `unknown` while the output is `number`:
+
+```typescript
+export const [feature]Schema = z.object({
+  quantity: z.coerce.number().min(1, "[feature].form.quantityRequired"),
 })
 ```
 
-- Layout: `FieldGroup` + `Field` + `FieldLabel` + `FieldDescription` — never raw `div`s, never legacy `Form`/`FormField`/`FormItem`. Array rows (tags, photo URLs) are still `Field`s.
-- `register` for plain inputs; `Controller` for Select/Combobox/DatePicker.
-- Errors via `FieldDescription` driven by `t(errors.[field]?.message)` — schema messages are translation keys, never text. Let RHF + Zod validate — no manual `onChange` validation.
-- Submit button: `disabled={isSubmitting || mutation.isPending}` + `Spinner` with `data-icon="inline-start"` — never just swap the label.
-- Submit target is a mutation hook from the module's mutations file (`ui-conventions` owns the form's visual layout beyond `Field`; this skill owns the submit wiring).
-- Multi-step → step components sharing state via `FormProvider`.
-- An edit form's initial values come from a query via `values` (or `defaultValues` once, never
-  a `reset` effect on every render); `resetOptions: { keepDirtyValues: true }` keeps a
-  background refetch from erasing an in-progress edit, while a changed entity still resets
-  fully through `key` — [references/lifecycle.md](references/lifecycle.md) has the scenario.
-- `isSubmitting` is only accurate when `handleSubmit`'s callback awaits or returns the
-  mutation's promise.
-- `""`, a missing field, `null` and `0` are four distinct values; the schema and the payload
-  builder say which one a given state means — never send `""` for "not set."
+The field stays a string and becomes a number where the payload is built:
 
-The reference files use placeholders — `[entity]` kebab-case, `[Entity]` PascalCase, `I[Entity]`/`T[Entity]` type identifiers. Real infrastructure (`httpClient`, primitives under `@/shared/ui/`) keeps its real name.
+```typescript
+export const [feature]Schema = z.object({
+  quantity: z.string().refine((value) => !Number.isNaN(Number(value)), "[feature].form.quantityInvalid"),
+})
 
-## Never do
+const onSubmit = form.handleSubmit(async (values) => {
+  await mutateAsync({ ...values, quantity: Number(values.quantity) })
+})
+```
 
-- **Never let `z.input` diverge from `z.output`** on a form schema. A form schema round-trips the form's own values — see [references/schemas.md](references/schemas.md) for how a coerced number field is reconciled with this rule rather than exempted from it.
-- Never introduce a schema pattern with no precedent in [references/schemas.md](references/schemas.md) or in the repo.
-- Never duplicate an inferred type as a hand-written interface — `z.infer` is the source of truth.
-- **Never put a React 19 form action on an RHF form.** `<form action={...}>`/`useActionState` and `handleSubmit` are two handlers for the same submit event — whichever React invokes first wins, in practice the action, so `zodResolver` never runs and invalid values reach `mutationFn`. `useFormStatus().pending` reads a status this form never sets, since the action path RHF uses never calls the mechanism `useFormStatus` watches; `formState.isSubmitting` is the real flag, already in scope. This holds for one-field forms too; there is no size below which a second form pattern is worth it.
+## References
 
-## Reviewing
-
-In order of how often it hurts:
-
-- a hand-written interface duplicating `z.infer`
-- `z.input` diverging from `z.output` on a form schema (a `.transform`/`.preprocess`, or an unreconciled `z.coerce` field)
-- a `<form action>` / `useActionState` / `useFormStatus` on an RHF form
-- manual `onChange` validation instead of letting the resolver run
-- a raw `div` in place of `Field`/`FieldGroup`/`FieldLabel`/`FieldDescription`
-- an error message that is literal text instead of a `t()` key
-- a submit button that swaps its label instead of keeping it and showing a `Spinner`
-- `reset()` called from an effect on every refetch, erasing fields the user is mid-edit on,
-  instead of `values` + `keepDirtyValues` (and a `key` change when the edited entity changes)
-- `isSubmitting` read from a submit handler that does not await or return the mutation's promise
-- `""` sent for a field that means "not set" — `null` or an omitted key was meant
-- a field array keyed by index instead of `useFieldArray`'s own `field.id`
-- a server-side field error surfaced as a second toast instead of `setError`
-- `form.watch()` read in the component body where `useWatch` was meant, missing re-renders
-- no `defaultValues` on a controlled field, risking an uncontrolled→controlled warning
+- [references/form.md](references/form.md): writing a form component from scratch: the recipe, a field through `Controller` with its error state, the submit button, multi-step, why a React 19 form action is not used, and versions.
+- [references/schemas.md](references/schemas.md): writing or changing a schema: a new schema, `.extend`, a number field, env validation, and Zod 3 against Zod 4.
+- [references/lifecycle.md](references/lifecycle.md): an edit form fed by a query: initial values, a refetch mid-edit, a changed entity, empty versus `null`, `isSubmitting`, field arrays, server errors, `useWatch`.
+- Anything none of these covers: the current upstream docs through the `context7` MCP server (`/react-hook-form/react-hook-form`, `/colinhacks/zod`), not a guess.
+- [references/reviewing.md](references/reviewing.md): the questions `review` asks; not needed when writing code.

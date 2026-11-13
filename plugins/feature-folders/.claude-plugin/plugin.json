@@ -2,7 +2,7 @@
   "name": "feature-folders",
   "displayName": "Feature Folders",
   "description": "Architecture-agnostic structure guardrails: global buckets (components, hooks, providers, lib, config, api) plus feature/page/layout modules, a scaffolder, and hooks that reject a new file outside them, a wrong filename, or model content (a type, a constant, a schema, a hook, an HTTP call) in the wrong place — placement and naming only ever block a new file, so a legacy project stays untouched.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": {
     "name": "Vadym Haidai",
     "url": "https://github.com/vadimgaidai"

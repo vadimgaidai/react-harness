@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: gen-ui-text-key
+description: 'ui-conventions: a user-facing string is a t() key. Drawn from: user feedback 2026: no raw user-facing strings, always t("key")'
+expected_outcome: |
+  The text lives in the locale file and the component renders it through t().
+context:
+  scaffold_script: scaffold.sh

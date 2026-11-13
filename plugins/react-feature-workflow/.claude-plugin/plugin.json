@@ -1,8 +1,8 @@
 {
   "name": "react-feature-workflow",
   "displayName": "React Feature Workflow",
-  "description": "Build features from a spec, not one long chat: /spec writes the behaviour a human signs off, /plan turns it into modules that cite its acceptance criteria plus a sliced API contract, /implement builds them, /review checks the diff against the convention skills — each in a fresh session, so context stays small. Ships React 19, TanStack Query and shadcn/ui skills plus Figma agents.",
-  "version": "0.9.1",
+  "description": "Build React features from a spec, not one long chat: spec, plan, implement, verify and review are each a command that reads the file the stage before wrote, and /review checks any branch against the convention skills with no spec. Ships React 19, TanStack Query and shadcn/ui skills plus Figma agents.",
+  "version": "0.10.0",
   "author": {
     "name": "Vadym Haidai",
     "url": "https://github.com/vadimgaidai"

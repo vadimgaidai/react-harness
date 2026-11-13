@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: outcome-balance-chart
+description: 'outcome, arm A: a feature-sized chart with its data layer from a plain request, no workflow command, with feature-folders loaded beside the plugin in the with-arm. Read by hand against CHECKLIST.md (code-shape, typescript, ui-conventions, tanstack-query, error-handling); the grader only checks the work was done.'
+expected_outcome: |
+  The portfolio page shows a balance area chart with a 7d / 30d / 90d switch, fed by a query on a fake api function typed by the contract, with loading, empty and error states.
+plugins: ["../..", "../../../feature-folders"]
+context:
+  scaffold_script: scaffold.sh

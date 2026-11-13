@@ -1,11 +1,30 @@
 # Code shapes
 
-> One pair per rule: the shape that gets reported, then the shape that replaces it. Placeholders
-> (`[entity]`, `[Entity]`, `I[Entity]`) stand for real names. Every replacement returns the same
-> values as the original for the same inputs; where that needs a condition, the condition is
-> stated next to the pair.
+Answers: where exactly does a `code-shape` rule stop, and what does the shape it reports
+look like next to the shape that replaces it? Open the one section a doubt or a finding
+needs; each section is named after its rule, and `review` and other skills cite them as
+`code-shape §<section>`.
+
+One pair per rule: the shape that gets reported, then the shape that replaces it.
+Placeholders (`[entity]`, `[Entity]`, `I[Entity]`) stand for real names. Every replacement
+returns the same values as the original for the same inputs; where that needs a condition,
+the condition is stated next to the pair.
+
+Sections: The least code · Comments · Two parameters · Guard clauses · A return is a block ·
+Ternaries ·
+Collections by meaning · Explicit returns · Boolean parameters · A setter takes a patch ·
+Names · The name covers the behaviour · Extract for a name, not for size · A pure helper
+beside a hook · Magic numbers and boundary literals.
 
 ## The least code
+
+Reuse the primitive, library call or idiom that already exists before writing one. What
+goes: a wrapper that only forwards a call, a re-export that only renames, a variable that
+only repeats the expression `return`ed on the next line, a default branch for a state the
+input is guaranteed never to hold, a parameter nothing passes yet. A single use does not
+make a variable redundant, and a wrapper that owns a boundary (the API module, the adapter
+around a dependency) stays. A diff well past its sibling's size for the same role is a
+reason to look for these, not a finding by itself.
 
 ```ts
 export const get[Entity]ById = (id: string) => [entity]Api.getById(id)
@@ -18,15 +37,28 @@ The wrapper only forwards, the re-export only renames, the variable only repeats
 returned on the next line. Call `[entity]Api.getById` directly, import `formatDate` under its
 own name, return the expression.
 
+```ts
+const toKebab = (name: string) => {
+  if (name === "index") {
+    return name
+  }
+
+  return name.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase()
+}
+```
+
+`"index"` has no capital to replace, so the code after the check already returns it unchanged;
+the check goes. A check stays when removing it changes a result for some input.
+
 What stays: `[entity]Api` itself (the boundary around `http`), a variable whose name says what
 the expression means at this spot (`const isOwner = user.id === [entity].authorId` used once
 is fine), a re-export that forms a module's public surface.
 
 ```ts
 switch (status) {
-  case [Entity]Status.Draft:
+  case "draft":
     return t("[entity].status.draft")
-  case [Entity]Status.Published:
+  case "published":
     return t("[entity].status.published")
   default:
     return t("[entity].status.unknown")
@@ -38,11 +70,25 @@ to be in the union: produced in this codebase, or parsed at the boundary (`zod` 
 exhaustive check in the mapper). A type annotation on a value read from the API, the URL or
 storage is a promise, not a guarantee; there the `default` is the guard and stays. Same for
 `?? fallback` on a field — remove it with the schema that makes it unreachable, not with the
-type alone. Make the switch exhaustive (`typescript` skill) and delete the branch.
+type alone. Replace the branch with the `never` check from `typescript` §Exhaustive `switch`, so a
+member added later fails the build instead of reaching a fallback.
 
 ## Comments
 
+Code carries no comments. Two marks are allowed: `// TODO: <what is left>` for work decided
+to be done later, and `// ! <note>` for important logic a reader must not break or "clean up".
+JSDoc that restates the signature, banner lines (`// ===== Helpers =====`) and "for now" notes
+are comments too.
+A tool directive with its reason (`eslint-disable`, `@ts-expect-error`) is not a comment and
+stays. Restating the line, step narration and section headers like `// Handle errors` go.
+
 ```ts
+/**
+ * Formats the amount.
+ * @param value - the amount
+ */
+const formatAmount = (value: number) => …
+
 // Calculate the badge size based on the count
 const badgeSize = count > 99 ? "lg" : "sm"
 
@@ -58,11 +104,18 @@ const visible = items.slice(0, 50)
 const timeout = setTimeout(close, 0)
 ```
 
-The first says what the line says. The second is a section header for a block that already
+The JSDoc and the first comment say what the signature and the line say. The second is a section header for a block that already
 reads. The third names deferred work. The fourth names a constraint a reader would otherwise
 "clean up". Only the last two survive.
 
 ## Two parameters
+
+The ceiling applies to functions of ours. An external API's signature and a callback whose
+signature a library sets (`map`, `reduce`, an event handler, a resolver) keep their shape:
+`items.reduce((sum, item, index) => …, 0)` is not a third parameter to report.
+
+The first parameter, the value the function is about, stays positional; the rest go into one
+typed options object.
 
 ```ts
 const submit = (articleId: string, body: string, onDone: () => void) => …
@@ -70,15 +123,22 @@ submit(id, text, refresh)
 ```
 
 ```ts
-interface ISubmitOptions { articleId: string; body: string; onDone: () => void }
-const submit = ({ articleId, body, onDone }: ISubmitOptions) => …
-submit({ articleId: id, body: text, onDone: refresh })
+interface ISubmitOptions {
+  body: string
+  onDone: () => void
+}
+
+const submit = (articleId: string, { body, onDone }: ISubmitOptions) => …
+submit(id, { body: text, onDone: refresh })
 ```
 
-The call site reads, order stops mattering, an optional field stops being an `undefined`
-placeholder in the middle.
+The call site reads, the order of the options stops mattering, an optional field stops being an
+`undefined` placeholder in the middle.
 
 ## Guard clauses
+
+Exit cases return at the top and the happy path stays unindented. Nesting past two levels
+inverts the conditions first; extract only when the inner block is an operation with a name.
 
 ```ts
 const canEdit = (user: IUser | null, [entity]: I[Entity]) => {
@@ -95,7 +155,7 @@ const canEdit = (user: IUser | null, [entity]: I[Entity]) => {
 ```
 
 ```ts
-const canEdit = (user: IUser | null, [entity]: I[Entity]) => {
+const canEdit = (user: IUser | null, [entity]: I[Entity]): boolean => {
   if (!user) {
     return false
   }
@@ -111,7 +171,31 @@ const canEdit = (user: IUser | null, [entity]: I[Entity]) => {
 Inverting flattens the depth without a new function. Extract instead when the innermost block
 is an operation with its own name — then the function is kept for the name, not for the depth.
 
+## A return is a block
+
+A `return` sits on its own line inside braces, never `if (x) return y` on one line. The same
+holds for any single-statement `if`.
+
+```ts
+if (!user) return null
+if (isDirty) save()
+```
+
+```ts
+if (!user) {
+  return null
+}
+
+if (isDirty) {
+  save()
+}
+```
+
 ## Ternaries
+
+A ternary picks between two values. It never picks between behaviours (two calls with side
+effects) and never nests: a second condition becomes a named boolean, a named value, a
+lookup map or a sub-component.
 
 ```tsx
 const labelKey = isOwner
@@ -137,9 +221,30 @@ single-use variables that earn their line.
 isPending ? <Spinner /> : error ? <ErrorState /> : <[Entity]List items={data} />
 ```
 
-Three render branches are early returns, not a ternary chain.
+Three render branches are early returns, not a ternary chain:
+
+```tsx
+if (isPending) {
+  return <Spinner />
+}
+
+if (error) {
+  return <ErrorState />
+}
+
+return <[Entity]List items={data} />
+```
 
 ## Collections by meaning
+
+`map`/`filter`/`find`/`some`/`every` where they say the operation and keep behaviour; a
+loop that reads is not rewritten. What goes is repeated work: a search over one collection
+repeated for each element of another, a value recomputed per iteration, an intermediate
+array nobody reads. A `Map`/`Set` or a value computed once replaces it when the task
+warrants, with order, duplicates, missing values and side effects checked (`find` returns
+the first match; filling a `Map` keeps the last). `map` with `find` inside, or the inner
+loop moved into a helper, is the same repetition. A task that must visit every pair keeps
+its nested traversal.
 
 ```ts
 for (const comment of comments) {
@@ -193,6 +298,9 @@ Every pair is the task; the nested traversal stays. A loop is a finding only whe
 work the task does not need.
 
 ## Explicit returns
+
+Implicit arrow returns are for one expression. A branching body writes the value in every
+`return` and annotates the return type.
 
 ```ts
 const parsePage = (raw: string | null) => {
@@ -287,6 +395,9 @@ and `Service` are the absence of a name. A `2` means the author did not grep.
 
 ## The name covers the behaviour
 
+`parse*`, `get*`, `format*` promise one operation. A body that also sorts, dedupes in a way
+callers rely on, or caches either loses the extra behaviour or gets a name that says it.
+
 ```ts
 const parseTags = (raw: string | null): Array<string> =>
   (raw ?? "").split(",").filter(Boolean).sort()
@@ -307,6 +418,10 @@ the name says so: `parseSortedTags`. Same for a `get*` that caches or a `format*
 trims: the name tells the whole story or the body does less.
 
 ## Extract for a name, not for size
+
+A function earns its place by naming an operation or owning a responsibility (a hook owns
+its state), one caller or ten. A chunk that only forwards, or was cut out to shorten the
+parent, is inlined.
 
 ```ts
 const buildQueryKey = (filters: I[Entity]Filters) => [entity]Keys.list(filters)
@@ -333,8 +448,9 @@ callers there are or how long the parent is.
 
 ## A pure helper beside a hook
 
+In `use-[entity]-filters.ts`:
+
 ```ts
-// use-[entity]-filters.ts
 const parseTags = (raw: string | null): Array<[Entity]Tag> =>
   (raw ?? "").split(",").filter(is[Entity]Tag)
 
@@ -346,9 +462,8 @@ export const use[Entity]Filters = () => { … }
 
 `parseTags` and `toTagsParam` use no React, carry names a reader looks up, and are the part
 of the hook a test would want without rendering anything. They move to where the
-structure skill puts the module's pure functions (`feature-folders`: the placement table's
-Function row, a local helper file in the module; `src/lib/` only when a second module needs
-it), and the hook imports them. The hook file keeps what owns React state.
+structure skill loaded in this project puts a module's pure functions, and the hook imports
+them. The hook file keeps what owns React state.
 
 What stays inline: a one-expression mapping used once (`const page = Number(raw ?? 1)`), an
 arrow the hook's own `useMemo` wraps. The rule is about a helper that is pure *and* named
@@ -357,7 +472,7 @@ arrow the hook's own `useMemo` wraps. The rule is about a helper that is pure *a
 ## Magic numbers and boundary literals
 
 ```ts
-if (body.length > 2000) …
+const isTooLong = body.length > 2000
 setTimeout(save, 500)
 ```
 
@@ -366,8 +481,8 @@ const COMMENT_MAX_LENGTH = 2000
 const AUTOSAVE_DELAY_MS = 500
 ```
 
-A number with a domain meaning gets the domain's name, in `constants.ts` when a second file
-needs it. `0`, `1` and an array index are not magic.
+A number with a domain meaning gets the domain's name; when a second file needs it, it goes
+where the structure skill puts shared constants. `0`, `1` and an array index are not magic.
 
 ```ts
 const isArchived = searchParams.get("archived") === "true"

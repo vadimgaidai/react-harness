@@ -1,7 +1,8 @@
 # Effects you do not need
 
-> Every shape here is the same defect: an effect doing work that belongs in render, a handler,
-> the query cache or a subscription primitive. Each pair shows the effect and what replaces it.
+> Which `useEffect` is not needed, and what replaces it? Every shape here is the same defect: an
+> effect doing work that belongs in render, a handler, the query cache or a subscription
+> primitive. Each pair shows the effect and what replaces it.
 
 ## Derived state
 
@@ -36,6 +37,27 @@ the entity changes, which is what `key` is for:
 <CommentEditor key={comment.id} comment={comment} />
 ```
 
+## Keeping the previous value
+
+A component that renders the old value beside the new one (a cross-fade, a "changed from"
+label) tracks it as state adjusted during render, not with an effect and not with a ref
+written while rendering:
+
+```tsx
+const [current, setCurrent] = useState(value)
+const [previous, setPrevious] = useState(value)
+
+if (value !== current) {
+  setPrevious(current)
+  setCurrent(value)
+}
+```
+
+Setting the component's own state during render, behind a comparison that stops the next
+pass, is the one write render allows: React discards the output and renders again before
+painting, so there is no stale frame. An effect would paint the old value first; a ref written
+during render breaks render purity and is not seen by the Compiler.
+
 ## An event's side effect
 
 ```tsx
@@ -46,14 +68,55 @@ useEffect(() => {
 }, [submitted])
 ```
 
-It happened because the user clicked, so it lives where the click is handled:
+It happened because the user clicked, so it lives where the click is handled, in `mutate`'s
+per-call callback so the shared options' own `onSuccess` still runs (`tanstack-query` skill):
 
 ```tsx
-const { mutate } = useMutation({
-  ...[entity]Mutations.update(),
+mutate(values, {
   onSuccess: () => toast.success(t("[entity].saved")),
 })
 ```
+
+## An event fired from an effect
+
+The effect reconnects whenever `theme` changes, although only the notification reads it:
+
+```tsx
+useEffect(() => {
+  const connection = createConnection(roomId)
+  connection.on("connected", () => {
+    showNotification(t("chat.connected"), theme)
+  })
+  connection.connect()
+
+  return () => connection.disconnect()
+}, [roomId, theme])
+```
+
+The notification is an event that happens to fire from the effect. `useEffectEvent` (React
+19.2) reads the latest `theme` and is not a dependency:
+
+```tsx
+const onConnected = useEffectEvent(() => {
+  showNotification(t("chat.connected"), theme)
+})
+
+useEffect(() => {
+  const connection = createConnection(roomId)
+  connection.on("connected", () => {
+    onConnected()
+  })
+  connection.connect()
+
+  return () => connection.disconnect()
+}, [roomId])
+```
+
+It replaces the two older workarounds: a ref that holds the latest value, and a dependency left
+out behind `// eslint-disable-next-line react-hooks/exhaustive-deps`, which reads a stale
+`theme`. An Effect Event is declared in the same component or hook as its effect, is never put
+in a dependency array, and is not a way to silence the linter: a value the effect really
+reacts to stays a dependency.
 
 ## Calling `onChange` when state changes
 
@@ -67,7 +130,7 @@ Fires on mount with the initial value and once more per render where `onChange` 
 closure. Call it in the handler that changes the value:
 
 ```tsx
-const handleChange = (next: string) => {
+const updateSearch = (next: string) => {
   setValue(next)
   onChange(next)
 }
@@ -105,7 +168,7 @@ when the shape differs (`tanstack-query` skill).
 ## Initializing on mount
 
 ```tsx
-const [config, setConfig] = useState<Config | null>(null)
+const [config, setConfig] = useState<IConfig | null>(null)
 useEffect(() => {
   setConfig(buildConfig(props))
 }, [])
@@ -160,14 +223,14 @@ navigation hook; interaction events belong to the handler that caused them.
 ```tsx
 const [online, setOnline] = useState(navigator.onLine)
 useEffect(() => {
-  const on = () => setOnline(true)
-  const off = () => setOnline(false)
-  window.addEventListener("online", on)
-  window.addEventListener("offline", off)
+  const goOnline = () => setOnline(true)
+  const goOffline = () => setOnline(false)
+  window.addEventListener("online", goOnline)
+  window.addEventListener("offline", goOffline)
 
   return () => {
-    window.removeEventListener("online", on)
-    window.removeEventListener("offline", off)
+    window.removeEventListener("online", goOnline)
+    window.removeEventListener("offline", goOffline)
   }
 }, [])
 ```

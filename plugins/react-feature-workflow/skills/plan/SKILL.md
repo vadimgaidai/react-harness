@@ -1,6 +1,7 @@
 ---
 name: plan
 description: Turns `.planning/[name]/SPEC.md` into the HOW — one `PLAN.md` with modules in build order, each citing the acceptance criteria it serves, plus the sliced API contract, the design brief and a readiness check before implementation starts. Asks only what the codebase and the spec cannot answer. Use when a spec exists and the user wants modules, structure or a build order; the step between `/spec` and `/implement`.
+disable-model-invocation: true
 ---
 
 # Plan
@@ -136,11 +137,6 @@ reported:
 If a structure skill ships a scaffolder, run it per module in build order. Otherwise skip —
 the implementer creates files as it goes.
 
-## 7 — Hand off
-
-State the PLAN.md path, then: "Next: `/react-feature-workflow:implement`." A whole-theme
-pass (`theme-sync` in theme mode) stays a separate, user-initiated run.
-
 ## Quality bar
 
 - Unambiguous — the same spec and plan produce the same code twice.
@@ -150,3 +146,8 @@ pass (`theme-sync` in theme mode) stays a separate, user-initiated run.
 - A block repeated across frames is one module, built once — per-block builders cannot see
   siblings, so dedup happens here or not at all.
 - Never run a full build or lint to answer a planning question.
+
+## 7 — Hand off
+
+State the PLAN.md path, then: "Next: `/react-feature-workflow:implement`." A whole-theme
+pass (`theme-sync` in theme mode) stays a separate, user-initiated run.

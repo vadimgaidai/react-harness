@@ -11,7 +11,7 @@ never "because it might be reused".
 
 | Role | Local default | Promote to global when… | Global home |
 |---|---|---|---|
-| Component | `<module>/components/` | it is imported by a **second** module **and** renders nothing domain-specific (no feature's types, no feature's copy) | `src/components/` |
+| Component | `<module>/components/` | it renders nothing domain-specific (no feature's types, no feature's copy): global from the start, like a chart blank or a stat tile; or it is imported by a **second** module once its domain part is split off | `src/components/` |
 | Hook | `<module>/hooks/` | same test as component: a second module needs it and it holds no domain knowledge | `src/hooks/` |
 | Provider / context | `<module>/providers/` | it is mounted in `src/app/` or in a layout, so more than one page sees it | `src/providers/` |
 | Request/response type | in the request's module | the shape is named in `contract.md`, or a second module calls the same endpoint | `src/api/<resource>/types.ts` |
@@ -31,7 +31,7 @@ client function, one query key, one cache entry. A feature's `hooks/use-<name>.t
 composes calls from `api/<resource>/` with local state; it does not own an
 `api/` folder of its own. See [references/api.md](api.md).
 
-## Why "renders/holds nothing domain-specific" is the real test
+## The real test is what it renders, not who calls it
 
 A component or hook that is reused but still prints one feature's copy, reads
 one feature's types, or reaches into one feature's state is not generic — it is
