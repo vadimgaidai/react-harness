@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 You write the WHAT. The human reads and corrects this file before any HOW exists, so it
 holds behaviour, not implementation: no module paths, no component names, no library names,
-no hooks, no code. `/react-feature-workflow:plan` turns it into modules afterwards.
+no hooks, no code. `/react-harness:plan` turns it into modules afterwards.
 
 **One request = one SPEC.md**, at `.planning/[name]/SPEC.md`, `[name]` kebab-case.
 
@@ -20,7 +20,7 @@ following it anyway. Without a prefix, classify from the request.
 
 | Shape | What it looks like | Spec |
 |---|---|---|
-| **block** | One presentational block — a hero, a pricing card, a header | None. Reply "run `@react-feature-workflow:block-builder <node-url> into <path>`" and stop. |
+| **block** | One presentational block — a hero, a pricing card, a header | None. Reply "run `@react-harness:block-builder <node-url> into <path>`" and stop. |
 | **layout** | A page assembled from blocks — a landing, a marketing page | Light spec: name, one node URL per block, which composites repeat, text/i18n, 2–4 AC. Skip the taxonomy pass. |
 | **feature** | Behaviour — data, forms, state: a table, a chat, a checkout | Full spec. |
 | **change** | An edit to a module that already exists | Full spec in delta form: what is added, modified, removed, plus **Unchanged behaviour**. |
@@ -159,5 +159,5 @@ invent a criterion to cover a rule.
 
 ## 5 — Hand off
 
-"Read and fix `.planning/[name]/SPEC.md`, then run `/react-feature-workflow:plan`." For a
+"Read and fix `.planning/[name]/SPEC.md`, then run `/react-harness:plan`." For a
 **block**, the `block-builder` call from step 0 and nothing else.

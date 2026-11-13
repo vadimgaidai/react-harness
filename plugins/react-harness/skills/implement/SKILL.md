@@ -33,7 +33,7 @@ When sources disagree, follow the winner named here and report the deviation in 
 ## Inputs
 
 - `.planning/[name]/SPEC.md` — **authoritative for behaviour**: the `R-` rules, UI states, permissions, unchanged behaviour and the acceptance criteria the work is judged by. Read it whole; it is capped for that. The plan cites `AC-` ids rather than copying them, so a behaviour question is answered here, never from the plan's prose.
-- `.planning/[name]/PLAN.md` — the HOW: modules in build order, what each serves, boundaries, decisions. Missing? Ask the user to run `/react-feature-workflow:spec` and then `/react-feature-workflow:plan`, or take a direct brief for a small change. A `PLAN.md` with its own acceptance criteria and no `SPEC.md`: use those criteria and say the spec is missing; do not stop for it.
+- `.planning/[name]/PLAN.md` — the HOW: modules in build order, what each serves, boundaries, decisions. Missing? Ask the user to run `/react-harness:spec` and then `/react-harness:plan`, or take a direct brief for a small change. A `PLAN.md` with its own acceptance criteria and no `SPEC.md`: use those criteria and say the spec is missing; do not stop for it.
 - `.planning/[name]/contract.md` — **authoritative for every request/response shape.** Read it; never open the raw OpenAPI/Swagger file it names as its `Source:` — not with `Read`, not with `cat` or `jq` — and never invent a field it does not list. The slice already carries every field, required flag, enum and format the spec has for these endpoints.
 - `.planning/[name]/DESIGN.md` when the plan names a design — **authoritative for tokens, spacing, layout and measurements. Never call Figma MCP for anything it answers; its saved screenshots are read with `Read`, not re-fetched.** The only Figma calls during implementation are `block-builder` delegations — one per presentational block; a static shell needs the real node payload, a slice can't replace it. A value flagged "no match" is a real gap: surface it, don't invent one.
 
@@ -81,8 +81,8 @@ Of a skill's `references/`, open only the file that matches what you are about t
 
 ## Verify
 
-Run the project's typecheck. Do not run a full build or lint unless the project has no other check — pre-commit hooks and CI own those. Then look at each screen you built once, as `ui-conventions` says, and fix what looks wrong; a full walk of every flow is `/react-feature-workflow:verify`'s `manual` tier, and anything you could not see is reported as such rather than claimed. When the typecheck passes, write the report and stop. A typecheck that cannot run (dependencies not installed, registry unreachable) is not a failure: do not install packages or fall back to a global `tsc`; say why in the report and stop.
+Run the project's typecheck. Do not run a full build or lint unless the project has no other check — pre-commit hooks and CI own those. Then look at each screen you built once, as `ui-conventions` says, and fix what looks wrong; a full walk of every flow is `/react-harness:verify`'s `manual` tier, and anything you could not see is reported as such rather than claimed. When the typecheck passes, write the report and stop. A typecheck that cannot run (dependencies not installed, registry unreachable) is not a failure: do not install packages or fall back to a global `tsc`; say why in the report and stop.
 
 ## Output
 
-Files created/edited, anything newly required (a package to install, a UI primitive to add), and anything in the plan you did **not** build, with the reason. Then: "Next: `/react-feature-workflow:verify`" — or `/react-feature-workflow:refine` first, when what you see needs changing.
+Files created/edited, anything newly required (a package to install, a UI primitive to add), and anything in the plan you did **not** build, with the reason. Then: "Next: `/react-harness:verify`" — or `/react-harness:refine` first, when what you see needs changing.

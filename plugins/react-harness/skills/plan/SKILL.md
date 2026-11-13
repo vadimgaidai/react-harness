@@ -7,7 +7,7 @@ disable-model-invocation: true
 # Plan
 
 You turn the WHAT into the HOW and produce **one** file. You write no production code —
-`/react-feature-workflow:implement` does, reading what you wrote.
+`/react-harness:implement` does, reading what you wrote.
 
 **One request = one PLAN.md**, even when it spans several modules: the implementer reads one
 document.
@@ -16,7 +16,7 @@ document.
 
 - `.planning/[name]/SPEC.md` — authoritative for behaviour, UI states, permissions and
   acceptance criteria. Missing for a `feature` or `change`? Stop and say: "run
-  `/react-feature-workflow:spec`". A `layout` may arrive with the light spec.
+  `/react-harness:spec`". A `layout` may arrive with the light spec.
 - The project's `CLAUDE.md` and `.claude/rules/`, and a structure skill when one is loaded.
 
 Read the spec whole — it is capped at 120 lines for exactly this. Then check it before
@@ -142,12 +142,12 @@ the implementer creates files as it goes.
 - Unambiguous — the same spec and plan produce the same code twice.
 - No invented shapes: anything API-shaped points at `contract.md`.
 - No behaviour the spec does not carry; a new requirement discovered here goes back to
-  `/react-feature-workflow:spec`, not into the plan.
+  `/react-harness:spec`, not into the plan.
 - A block repeated across frames is one module, built once — per-block builders cannot see
   siblings, so dedup happens here or not at all.
 - Never run a full build or lint to answer a planning question.
 
 ## 7 — Hand off
 
-State the PLAN.md path, then: "Next: `/react-feature-workflow:implement`." A whole-theme
+State the PLAN.md path, then: "Next: `/react-harness:implement`." A whole-theme
 pass (`theme-sync` in theme mode) stays a separate, user-initiated run.

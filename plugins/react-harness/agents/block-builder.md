@@ -13,12 +13,12 @@ You turn one Figma block into one component that follows this project's conventi
 
 - A Figma node URL (fileKey + node-id). Missing node-id → exit with a report saying so; you cannot prompt the user.
 - Where the component goes (a path or module name). Not given → follow the project's layout: find one existing component of the same kind and mirror its location.
-- A props contract, when the caller states one (`/react-feature-workflow:implement` does) — build the component against exactly those props; invent none, drop none.
+- A props contract, when the caller states one (`/react-harness:implement` does) — build the component against exactly those props; invent none, drop none.
 - `.planning/[name]/DESIGN.md`, if it exists — theme-sync already mapped this design's values to tokens there. Use its map instead of calling `get_variable_defs` again, and inherit its NO MATCH decisions instead of re-litigating them.
 
 ## House rules
 
-Before the first Write, call `code-shape`, `typescript`, `react`, `ui-conventions` and `error-handling` through the `Skill` tool, the same route as every component in this kit. The component follows them.
+Before the first Write, call `code-shape`, `typescript`, `react`, `ui-conventions` and `error-handling` through the `Skill` tool, the same route as every component in this harness. The component follows them.
 
 ## Slicing — spend tokens on one block only
 
@@ -54,4 +54,4 @@ The returned code is React + Tailwind **reference**, not final code. Honor its h
 
 ## Output
 
-Files written, primitives reused, anything to install, every NO MATCH (value → where used → suggested resolution), and layout flags (no auto-layout, custom shadows). If the theme tokens obviously don't match the design's palette, say so first and point at `@react-feature-workflow:theme-sync`.
+Files written, primitives reused, anything to install, every NO MATCH (value → where used → suggested resolution), and layout flags (no auto-layout, custom shadows). If the theme tokens obviously don't match the design's palette, say so first and point at `@react-harness:theme-sync`.

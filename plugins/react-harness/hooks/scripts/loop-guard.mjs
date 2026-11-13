@@ -90,23 +90,23 @@ const nextStage = ({ loop, text }) => {
   const review = read(loop.reviewPath);
   const status = field(verify, "status");
   if (!verify) {
-    return { stage: "verify", reason: `Invoke react-feature-workflow:verify ${loop.name}.` };
+    return { stage: "verify", reason: `Invoke react-harness:verify ${loop.name}.` };
   }
   if (field(text, "edited_after_verify") === "true") {
-    return { stage: "verify", reason: `The code changed after the last verify. Invoke react-feature-workflow:verify ${loop.name} again.` };
+    return { stage: "verify", reason: `The code changed after the last verify. Invoke react-harness:verify ${loop.name} again.` };
   }
   if (status === "failed") {
-    return { stage: "refine", reason: `VERIFY.md is failed (${field(verify, "fail")}). Invoke react-feature-workflow:refine ${loop.name} on its open items.` };
+    return { stage: "refine", reason: `VERIFY.md is failed (${field(verify, "fail")}). Invoke react-harness:refine ${loop.name} on its open items.` };
   }
   if (status === "done" || status === "partial") {
-    return { stage: "verify", reason: `refine touched VERIFY.md. Invoke react-feature-workflow:verify ${loop.name} again.` };
+    return { stage: "verify", reason: `refine touched VERIFY.md. Invoke react-harness:verify ${loop.name} again.` };
   }
   if (!review) {
-    return { stage: "review", reason: `VERIFY.md is ${status}. Invoke react-feature-workflow:review with .planning/${loop.name} in its arguments.` };
+    return { stage: "review", reason: `VERIFY.md is ${status}. Invoke react-harness:review with .planning/${loop.name} in its arguments.` };
   }
   const reviewRefined = ["done", "partial"].includes(field(review, "status")) && statSync(loop.reviewPath).mtimeMs > statSync(loop.verifyPath).mtimeMs;
   if (reviewRefined) {
-    return { stage: "verify", reason: `refine changed the code after the last verify. Invoke react-feature-workflow:verify ${loop.name} again.` };
+    return { stage: "verify", reason: `refine changed the code after the last verify. Invoke react-harness:verify ${loop.name} again.` };
   }
   return null;
 };

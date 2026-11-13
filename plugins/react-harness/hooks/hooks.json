@@ -9,7 +9,7 @@
     ],
     "SubagentStart": [
       {
-        "matcher": "^(general-purpose|react-feature-workflow:(block-builder|bug-fixer))$",
+        "matcher": "^(general-purpose|react-harness:(block-builder|bug-fixer))$",
         "hooks": [
           { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/scripts/session-skills.mjs" }
         ]

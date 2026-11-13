@@ -76,7 +76,7 @@ yes  - [x] declined — PLAN.md Decisions "the comment list owns its empty state
 | **Changed mind, behaviour** | The spec says A; the user now wants B on screen | Fix the code **and** update `SPEC.md` — the `R-` rule, the UI state, the permission, the affected `AC-` — plus the plan's Coverage row when the mapping moves. |
 | **Changed mind, structure** | The behaviour stands; the plan's HOW changes | Fix the code **and** update `PLAN.md` only — the module section, boundary or decision the change touches. |
 | **Design mismatch** | "doesn't match the design" | Check `DESIGN.md` first: a coding error → fix it; a recorded NO MATCH / gap → that is a pending decision, ask the user, don't guess. A presentational block wrong at the markup level → one `block-builder` call with its node URL; never a Figma fetch in this session. |
-| **New scope** | A new module, endpoint, role rule — or any dependency change | Not a refinement. Name it and route it: new behaviour → "run `/react-feature-workflow:spec`"; a new module for behaviour the spec already has → "run `/react-feature-workflow:plan`". |
+| **New scope** | A new module, endpoint, role rule — or any dependency change | Not a refinement. Name it and route it: new behaviour → "run `/react-harness:spec`"; a new module for behaviour the spec already has → "run `/react-harness:plan`". |
 
 A message that mixes kinds gets split: do the refinements, list what you routed away.
 
@@ -93,4 +93,4 @@ The project's typecheck. Nothing heavier.
 
 ## Output
 
-Files changed; every `SPEC.md` and `PLAN.md` edit as old → new; anything routed to `spec`, `plan` or `api-contract`, with the reason. Then: "Next: `/react-feature-workflow:verify`" while a criterion is still open, otherwise "Next: `/react-feature-workflow:review`" — or another pass here if more comes up.
+Files changed; every `SPEC.md` and `PLAN.md` edit as old → new; anything routed to `spec`, `plan` or `api-contract`, with the reason. Then: "Next: `/react-harness:verify`" while a criterion is still open, otherwise "Next: `/react-harness:review`" — or another pass here if more comes up.

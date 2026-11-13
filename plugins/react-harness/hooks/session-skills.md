@@ -1,4 +1,4 @@
-Before the first Write or Edit of code in this project, call the react-feature-workflow skills below. They hold the project's conventions.
+Before the first Write or Edit of code in this project, call the react-harness skills below. They hold the project's conventions.
 
 - Every `.ts` or `.tsx` file: `code-shape`, `typescript`.
 - Every component or hook: `react`, `ui-conventions`, `error-handling`.

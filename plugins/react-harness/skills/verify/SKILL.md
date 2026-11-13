@@ -128,5 +128,5 @@ not run (say which and why under Checks), otherwise `ready`. Every `AC-` id from
 sits in exactly one of `pass`, `fail`, `manual`.
 
 Reply with the status, the Criteria lines and the path, and nothing about the code beyond
-them. Fails go to `/react-feature-workflow:refine`; a `ready` file goes to
-`/react-feature-workflow:review`.
+them. Fails go to `/react-harness:refine`; a `ready` file goes to
+`/react-harness:review`.

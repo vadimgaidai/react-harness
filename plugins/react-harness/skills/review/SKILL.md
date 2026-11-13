@@ -1,6 +1,6 @@
 ---
 name: review
-description: Checks a change against the project's and this kit's code rules, for unnecessary complexity and for inefficient data handling — reading only the context each question needs, and proving every finding before reporting it. Writes the report to `.planning/[name]/REVIEW.md` when the work has a planning folder. Reports only; fixes are a separate request through `refine`. Takes an optional angle argument (`skills`, `structure`, `sibling`, `slop`) and a git range or paths. Use before opening a PR, or when the user asks to review changes.
+description: Checks a change against the project's and this harness's code rules, for unnecessary complexity and for inefficient data handling — reading only the context each question needs, and proving every finding before reporting it. Writes the report to `.planning/[name]/REVIEW.md` when the work has a planning folder. Reports only; fixes are a separate request through `refine`. Takes an optional angle argument (`skills`, `structure`, `sibling`, `slop`) and a git range or paths. Use before opening a PR, or when the user asks to review changes.
 allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/reviewing-sections.mjs)
 argument-hint: "[angles] [range or paths] [.planning/<name>]"
 context: fork
@@ -12,7 +12,7 @@ You check **the change under review**: does it follow our rules, is it more comp
 the task needs, does it handle data inefficiently. You read what a question needs and no
 more, and you prove each claim. The project's typecheck, lint and tests stay the project's
 checks. Not this skill's job: whether the change satisfies the spec and the contract
-(`/react-feature-workflow:verify`), correctness bugs (`/code-review`), security
+(`/react-harness:verify`), correctness bugs (`/code-review`), security
 (`/security-review`), generic simplification (`/simplify`) — the report says so, and the
 verdict never speaks for them.
 
@@ -53,7 +53,7 @@ or a `.planning/<name>/` folder exists for this work, in `.planning/<name>/REVIE
 
 ## 2 — Find the rules that apply
 
-Only rules the project or this kit **states**; never an architecture inferred from folder
+Only rules the project or this harness **states**; never an architecture inferred from folder
 names, and never a plugin's presence as the precondition for a rule written down.
 
 - `CLAUDE.md`, and every `.claude/rules/*.md` whose frontmatter `paths:` matches a changed
@@ -198,7 +198,7 @@ Layout:
 - **Verdict** — one line, for this review's scope only: *no findings against the checked
   rules* / *findings to take to `refine`* / *a project check is red*. Never "ready to
   merge": correctness and security were not reviewed here.
-- **Not this skill's job** — one line: `/react-feature-workflow:verify` for the acceptance
+- **Not this skill's job** — one line: `/react-harness:verify` for the acceptance
   criteria and the contract, `/code-review`, `/security-review`, `/simplify`.
 
 Write the same report to `.planning/<name>/REVIEW.md` when the arguments name that folder
@@ -212,7 +212,7 @@ settle, never as tasks.
 ## 6 — Fixing is a separate request
 
 `review` edits nothing — not even an obvious one-liner; a reviewer that edits is a second
-implementer. When the user asks for the fixes, that is `/react-feature-workflow:refine`:
+implementer. When the user asks for the fixes, that is `/react-harness:refine`:
 it reads `REVIEW.md`, verifies each item against the code as it is now, applies the fix
 one item at a time with the typecheck after each, and declines with evidence what would
 break behaviour or contradict the plan.

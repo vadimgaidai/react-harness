@@ -5,4 +5,4 @@ tags: [implement]
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]
 ---
 
-/react-feature-workflow:implement activity-note
+/react-harness:implement activity-note
