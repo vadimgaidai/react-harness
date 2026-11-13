@@ -1,11 +1,11 @@
 # Feature Folders
 
-Structure for React projects that are not Feature-Sliced Design: global buckets (`components/`, `hooks/`, `providers/`, `lib/`, `config/`, `api/`, `assets/`), `app/` for the entry point and root providers, plus `features/`, `pages/` and `layouts/` modules. A skill answers "local or global?"; one hook refuses a new file that lands outside them.
+The structure plugin of [React Harness](../../README.md) for projects that are not Feature-Sliced Design: a domain area is a `features/<name>/` module from its first file, a page only composes, an API folder per backend resource under `api/`, and global buckets (`components/`, `hooks/`, `providers/`, `lib/`, `config/`, `assets/`) plus `app/`, `pages/` and `layouts/`. A skill answers "local or global?"; one hook refuses a new file that lands outside them. What a project comes out like: the tree in the [use cases](../../docs/USE-CASES.md#a-crypto-dashboard-from-one-sentence).
 
 ## Install
 
 ```bash
-claude plugin marketplace add vadimgaidai/react-feature-kit
+claude plugin marketplace add vadimgaidai/react-harness
 claude plugin install feature-folders@vadimgaidai --scope project
 ```
 
@@ -24,6 +24,6 @@ Placement and naming check new files only. Editing a file that existed before th
 
 Whether something is a page, a layout or a feature, in three checks. Whether a component, hook, provider, type, constant, function, schema or API call is local to a module or global, by a table with one condition per role. Where an API call lives (`src/api/<resource>/`, never inside a module). Reference code for each kind of module.
 
-`scaffold.sh` creates a feature, page, layout or api module skeleton and refuses to touch an existing one. `structure-check.sh` finds a module without a barrel, a barrel re-exporting a missing file, a `use-*.ts` outside `hooks/`; `react-feature-workflow`'s `review` runs it over changed files.
+`scaffold.sh` creates a feature, page, layout or api module skeleton and refuses to touch an existing one. `structure-check.sh` finds a module without a barrel, a barrel re-exporting a missing file, a `use-*.ts` outside `hooks/`; `react-harness`'s `review` runs it over changed files.
 
-Works alone or with [react-feature-workflow](../react-feature-workflow). MIT.
+Works alone or with [react-harness](../react-harness). MIT.

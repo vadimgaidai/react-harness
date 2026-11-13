@@ -1,6 +1,6 @@
 # UI Component Placement
 
-> Where UI code lives in an FSD project. The *how* of building components (extending primitives, compound pattern, tokens) is the `ui-conventions` skill from the react-feature-workflow plugin — this file only decides the folder.
+> Where UI code lives in an FSD project. The *how* of building components (extending primitives, compound pattern, tokens) is the `ui-conventions` skill from the react-harness plugin — this file only decides the folder.
 
 ## The primitives folder is `shared/ui/`
 

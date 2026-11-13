@@ -5,30 +5,32 @@
     "name": "Vadym Haidai",
     "url": "https://github.com/vadimgaidai"
   },
-  "description": "Spec-driven development for React: turn requirements into specifications, architecture plans, implementation, verification, and code review — guided by explicit architectural rules and consistent React conventions",
+  "description": "React Harness for Claude Code: convention skills plus a structure plugin (feature folders or Feature-Sliced Design) make Claude write React applications in one structure on a plain request, with manual spec-driven stages and an automatic loop on top",
   "plugins": [
     {
-      "name": "react-feature-workflow",
+      "name": "react-harness",
       "author": {
         "name": "Vadym Haidai",
         "url": "https://github.com/vadimgaidai"
       },
-      "displayName": "React Feature Workflow",
-      "source": "./plugins/react-feature-workflow",
-      "description": "Build React features from a spec, not one long chat: spec, plan, implement, verify and review are each a command that reads the file the stage before wrote, and /review checks any branch against the convention skills with no spec. Ships React 19, TanStack Query and shadcn/ui skills plus Figma agents.",
+      "displayName": "React Harness",
+      "source": "./plugins/react-harness",
+      "description": "The core of React Harness for Claude Code: a hook that routes every session to nine convention skills (React 19, TanStack Query, shadcn/ui, forms, routing, TypeScript, error handling, code shape, testing), so a plain request comes out in one structure and style. Optional stages started by you: spec, plan, implement, verify, review, refine, and autopilot for a hook-driven verify → refine → review loop. Pair with feature-folders or feature-sliced-design; add a design plugin for the look.",
       "category": "workflow",
       "keywords": [
         "react",
+        "harness",
+        "architecture",
+        "code-style",
+        "conventions",
         "spec-driven-development",
-        "feature-workflow",
-        "planning",
         "code-review",
         "typescript",
         "tanstack-query",
         "shadcn-ui",
         "figma"
       ],
-      "version": "0.10.0"
+      "version": "1.0.0"
     },
     {
       "name": "feature-sliced-design",
@@ -38,14 +40,14 @@
       },
       "displayName": "Feature-Sliced Design",
       "source": "./plugins/feature-sliced-design",
-      "description": "Feature-Sliced Design guardrails: a skill that answers layer and import questions, a module scaffolder, and hooks that reject a misplaced file, a wrong filename, an upward/sideways import, or model content in the wrong place before it is written — not in review after.",
+      "description": "The structure plugin of React Harness for Feature-Sliced Design: a skill that answers layer and import questions, a module scaffolder, and hooks that reject a misplaced file, a wrong filename, an upward or sideways import, or model content in the wrong place before it is written, not in review after.",
       "category": "architecture",
       "keywords": [
         "feature-sliced-design",
         "fsd",
         "architecture"
       ],
-      "version": "0.3.2"
+      "version": "0.3.3"
     },
     {
       "name": "feature-folders",
@@ -55,7 +57,7 @@
       },
       "displayName": "Feature Folders",
       "source": "./plugins/feature-folders",
-      "description": "Architecture-agnostic structure guardrails: global buckets (components, hooks, providers, lib, config, api) plus feature/page/layout modules, a scaffolder, and hooks that reject a new file outside them, a wrong filename, or model content (a type, a constant, a schema, a hook, an HTTP call) in the wrong place — placement and naming only ever block a new file, so a legacy project stays untouched.",
+      "description": "The structure plugin of React Harness for projects without layers: a features/<name>/ module per domain area, an api/<resource>/ folder per backend resource, pages that only compose, plus global buckets. A skill answers local or global, a scaffolder creates a module, and a hook refuses a new file outside the structure, a wrong filename, or model content (a type, a constant, a schema, a hook, an HTTP call) in a UI file. Placement and naming block new files only, so a legacy project stays untouched.",
       "category": "architecture",
       "keywords": [
         "architecture",
@@ -63,7 +65,7 @@
         "feature-folders",
         "structure"
       ],
-      "version": "0.2.2"
+      "version": "0.3.0"
     }
   ]
 }

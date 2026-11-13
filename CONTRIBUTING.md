@@ -3,7 +3,7 @@
 ## Dev loop
 
 ```bash
-claude --plugin-dir ./plugins/react-feature-workflow
+claude --plugin-dir ./plugins/react-harness
 /reload-plugins        # after editing a skill or hook
 ```
 
@@ -14,7 +14,7 @@ claude plugin validate --strict .
 for p in plugins/*/; do claude plugin validate --strict "$p"; done
 ```
 
-CI runs the same two commands. What is and is not measured: [docs/DESIGN.md](./docs/DESIGN.md#how-the-kit-is-measured).
+CI runs the same two commands. What is and is not measured: [docs/DESIGN.md](./docs/DESIGN.md#how-the-harness-is-measured).
 
 What a skill, an agent, a hook and a stage have to look like: [docs/RUBRIC.md](./docs/RUBRIC.md). Skills are written and measured with Claude Code's own tools, listed there.
 

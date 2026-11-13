@@ -1,6 +1,6 @@
 # Rubric
 
-What a component of this kit has to look like before it is called done. Structure and cost are measured with Claude Code's own tools, listed under [How it is measured](#how-it-is-measured); skills are written and iterated with the `skill-creator` skill, and this page adds only what is specific to the kit. `verify` is the reference: [SKILL.md](../plugins/react-feature-workflow/skills/verify/SKILL.md) and its [check script](../plugins/react-feature-workflow/skills/verify/scripts/check-verify.mjs).
+What a component of this harness has to look like before it is called done. Structure and cost are measured with Claude Code's own tools, listed under [How it is measured](#how-it-is-measured); skills are written and iterated with the `skill-creator` skill, and this page adds only what is specific to the harness. `verify` is the reference: [SKILL.md](../plugins/react-harness/skills/verify/SKILL.md) and its [check script](../plugins/react-harness/skills/verify/scripts/check-verify.mjs).
 
 ## Pick the mechanism first
 
@@ -30,7 +30,7 @@ Written and revised through `skill-creator`, whose guide is the authority on for
 - Examples for the calls that are easy to get wrong.
 - Deterministic work is a file under `scripts/`, not a paragraph.
 
-What the kit adds:
+What the harness adds:
 
 - `argument-hint` and `$ARGUMENTS` when the skill takes arguments.
 - `context: fork` when it has to judge work it did not see being made.

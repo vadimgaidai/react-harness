@@ -1,7 +1,7 @@
 # Mutations & Cache Invalidation
 
 > Canonical code shape. Replace the placeholders (`[entity]` kebab-case, `[Entity]` PascalCase, `I[Entity]`/`T[Entity]` type identifiers) with real names.
-> This file is the **shape**: where the mutation lives, what it is named, which layer it may import from. The **policy** — how narrowly to invalidate, when `setQueryData` replaces an invalidation, when an optimistic update is warranted — is the `tanstack-query` skill (`react-feature-workflow` plugin). Load it too when you are writing the data layer.
+> This file is the **shape**: where the mutation lives, what it is named, which layer it may import from. The **policy** — how narrowly to invalidate, when `setQueryData` replaces an invalidation, when an optimistic update is warranted — is the `tanstack-query` skill (`react-harness` plugin). Load it too when you are writing the data layer.
 
 Mutations live in the **feature** that owns the action, and invalidate the **entity** keys that the action affects.
 
